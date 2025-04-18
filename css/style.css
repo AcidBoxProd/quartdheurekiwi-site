@@ -1,0 +1,689 @@
+/* ============================================= */
+/* === GLOBAL STYLES & VARIABLES ============= */
+/* ============================================= */
+
+:root {
+  --primary-color: #bde64c; /* Vert Kiwi Mis à Jour */
+  --secondary-color: #f4591e; /* Orange pour hover card (à ajuster) */
+  --text-light: #FEFEFE; /* Blanc */
+  --text-medium: #9fa0ac; /* Gris moyen */
+  --bg-dark: #1A1B1D; /* Fond sombre */
+  --font-primary: "Lato", sans-serif;
+  --transition-fast: all ease-in-out 100ms;
+  --transition-medium: all ease-in-out 250ms;
+  --transition-slow: all ease-in-out 1s;
+  --bezier-curve: cubic-bezier(0, 0.69, 0.46, 0.95);
+  --gallery-aspect-ratio: 4 / 3; /* Ratio pour la galerie (ex: 4/3, 16/9, 1/1) */
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+*, ::before, ::after {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+::-moz-selection {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+}
+
+::selection {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+}
+
+a {
+  text-decoration: inherit;
+  color: inherit;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-display: swap;
+  font-size: 16px;
+  color: var(--text-light);
+  background-color: var(--bg-dark);
+  line-height: 1.6;
+}
+
+h2 {
+ font-size: 2rem;
+ line-height: 1.2;
+}
+
+section {
+  min-height: 80vh;
+  padding: 50px 15%;
+  background-color: var(--bg-dark);
+  position: relative;
+}
+
+.separator {
+  width: 20vw;
+  max-width: 200px;
+  height: 2px;
+  margin: 50px 0;
+  background-color: var(--primary-color);
+}
+
+/* Placeholders */
+::-webkit-input-placeholder,
+::-moz-placeholder,
+:-ms-input-placeholder,
+::-ms-input-placeholder,
+::placeholder {
+  color: var(--bg-dark);
+  opacity: 0.8;
+}
+
+/* ============================================= */
+/* === HEADER / MENU / SHARE BUTTONS ========= */
+/* ============================================= */
+
+.mainView {
+  position: relative; /* DOIT être relative pour positionner enfants absolus */
+  min-height: 100vh;
+  width: 100%; /* Force la largeur complète */
+  color: var(--text-medium);
+  background: url("../img/bcc-free-template-rock-hard.jpg") center/cover no-repeat;
+  background-color: var(--bg-dark);
+  overflow: hidden; /* Important pour Rellax et position absolue */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.shareBtn {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  display: flex;
+  gap: 5px;
+  z-index: 10; /* Au dessus du logo/rellax */
+}
+
+.elementBtn {
+  cursor: pointer;
+  transition: transform var(--transition-medium);
+}
+.elementBtn:hover {
+ transform: scale(1.1);
+}
+
+.elementBtn img {
+  display: block;
+  width: 25px;
+  height: auto;
+}
+
+/* --- Menu Burger --- */
+.menu {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 5%;
+  right: 5%;
+  width: 50px;
+  height: 50px;
+  background-color: var(--primary-color);
+  border: solid 2px var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.menu .line {
+  position: absolute;
+  left: 25%;
+  height: 1px;
+  width: 50%;
+  transform-origin: left;
+  background-color: var(--bg-dark);
+  transition: var(--transition-medium);
+}
+
+.menu .line1 { top: 35%; transform: translateY(-50%) scaleX(0.5); }
+.menu .line2 { top: 50%; transform: translateY(-50%) scaleX(1); }
+.menu .line3 { top: 65%; transform: translateY(-50%) scaleX(0.75); }
+
+@media (hover: hover) and (pointer: fine) {
+    .menu:not(.active):hover .line1,
+    .menu:not(.active):hover .line3 {
+        transform: scaleX(1);
+    }
+}
+
+/* --- Sous-Menu Items --- */
+.ss-menu {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 5%;
+  right: 5%;
+  width: 50px;
+  height: 50px;
+  background-color: var(--bg-dark);
+  border: solid 2px var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), opacity 250ms ease-in-out, transform 250ms ease-in-out;
+  opacity: 0;
+  z-index: 1000;
+  transform: translateY(0);
+}
+
+.ss-menu img {
+  width: 20px;
+  height: 20px;
+  transition: transform var(--transition-fast);
+}
+
+.ss-menu:hover {
+  background-color: var(--primary-color);
+}
+
+.ss-menu:hover img {
+  transform: scale(1.2);
+}
+
+/* --- Menu Actif (Ouvert) --- */
+.menu.active .line1 { top: 50%; transform: translateY(-50%) scaleX(1) rotate(45deg); transition-delay: 0ms; }
+.menu.active .line2 { opacity: 0; }
+.menu.active .line3 { top: 50%; transform: translateY(-50%) scaleX(1) rotate(-45deg); transition-delay: 0ms; }
+
+/* --- Apparition des sous-menus (Ordre Corrigé) --- */
+.ss-menu.visible1 { opacity: 1; transform: translateY(75px);  transition-delay: 25ms; } /* Home */
+.ss-menu.visible2 { opacity: 1; transform: translateY(150px); transition-delay: 50ms; } /* Music */
+.ss-menu.visible3 { opacity: 1; transform: translateY(225px); transition-delay: 75ms; } /* Gallery */
+.ss-menu.visible4 { opacity: 1; transform: translateY(300px); transition-delay: 100ms;} /* Band */
+.ss-menu.visible5 { opacity: 1; transform: translateY(375px); transition-delay: 125ms;} /* Concerts */
+.ss-menu.visible6 { opacity: 1; transform: translateY(450px); transition-delay: 150ms;} /* Contact */
+
+
+/* --- Structure pour Rellax + Centrage Logo --- */
+
+/* Conteneur extérieur pour appliquer Rellax */
+.rellax-wrapper {
+  position: absolute; /* Se positionne par rapport à .mainView */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Derrière les boutons, au même niveau que le logo */
+  pointer-events: none; /* Permet aux clics de passer au travers */
+  /* Pas besoin d'autres styles, Rellax gère le transform */
+}
+
+/* Conteneur intérieur pour le logo et son centrage */
+.main-logo-container {
+  position: absolute; /* Se positionne par rapport à .rellax-wrapper ou .mainView */
+  width: 70%; /* Largeur relative */
+  max-width: 650px; /* Limite taille max */
+  left: 50%;
+  top: 70%; /* Centrage vertical */
+  transform: translate(-50%, -50%); /* Centrage H et V final */
+  opacity: 0;
+  animation: opacity 2s cubic-bezier(0.17, 0.67, 0.14, 0.97) 1s both;
+  z-index: 1; /* Même niveau que le wrapper */
+  text-align: center;
+  pointer-events: auto; /* Assure que le logo reste interactif si besoin */
+}
+
+.main-logo-container img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto; /* Centrage dans le conteneur */
+}
+
+
+/* ============================================= */
+/* === MAIN CONTENT SECTIONS ================= */
+/* ============================================= */
+
+/* --- General Text --- */
+p { color: var(--text-medium); margin: 50px 0; }
+p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
+.hardLight { font-size: clamp(1.5rem, 3vh, 2.5rem); line-height: 1.4; font-weight: 900; text-align: center; width: 70%; margin: 70px auto; }
+
+/* --- Section Band --- */
+.imgContent { display: flex; flex-wrap: wrap; justify-content: space-around; align-items: flex-start; gap: 30px; margin: 50px auto; width: 80%; }
+.imgContent .card { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1 1 200px; max-width: 250px; }
+.imgContent .card a { display: block; position: relative; margin-bottom: 15px; border-radius: 15px; overflow: hidden; }
+/* Pas d'effet ::before */
+.imgContent .card img { display: block; width: 100%; max-width: 250px; height: auto; border-radius: 15px; }
+.imgContent .card p { text-align: center; margin: 0; padding: 0; line-height: 1.3; }
+.imgContent .card p:first-of-type { font-size: 1.3rem; color: var(--text-light); font-weight: 700; }
+
+/* --- Section Musique (2 Vidéos) --- */
+.videos-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 30px;
+  margin-top: 2em;
+  flex-wrap: wrap;
+}
+
+.video-wrapper {
+  flex: 1;
+  min-width: 300px;
+  max-width: calc(50% - 15px);
+}
+
+.video-title {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-bottom: 15px;
+}
+
+.video-wrapper video {
+  width: 100%;
+  height: auto;
+  display: block;
+  background-color: #1E0E18;
+  cursor: pointer;
+  border: 1px solid var(--text-medium);
+  border-radius: 5px;
+}
+
+
+/* --- Section Galerie (Ratio fixe, Hover sur lien) --- */
+.galleryContent {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+  padding: 15px 0;
+  margin-top: 2em;
+}
+
+.galleryContent a.gallery-item-link {
+  display: block;
+  border-radius: 5px;
+  overflow: hidden;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  position: relative;
+  aspect-ratio: var(--gallery-aspect-ratio);
+}
+
+.galleryContent a.gallery-item-link:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(189, 230, 76, 0.3); /* Ombre couleur primaire */
+  cursor: pointer;
+}
+
+.galleryContent img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+
+/* --- Section Concerts (Style Cartes, Texte Agrandis, Sans Bouton) --- */
+.styled-dates .concert-list {
+  margin-top: 3em;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.styled-dates .concert-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2a2b2d;
+  padding: 25px 30px;
+  border-radius: 8px;
+  border-left: 5px solid var(--primary-color);
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.styled-dates .concert-item:hover:not(.concert-coming-soon) {
+  background-color: #3a3b3d;
+  transform: translateY(-3px);
+}
+
+.styled-dates .concert-info {
+  flex-grow: 1;
+}
+
+.styled-dates .concert-date {
+  display: block;
+  color: var(--text-medium);
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.styled-dates .concert-venue {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin: 0;
+  line-height: 1.2;
+}
+.styled-dates .concert-venue a {
+  color: var(--text-light);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+.styled-dates .concert-venue a:hover {
+  color: var(--primary-color);
+}
+
+.styled-dates .concert-city {
+  display: block;
+  color: var(--text-medium);
+  font-size: 1.1rem;
+  margin-top: 8px;
+}
+
+.styled-dates .concert-coming-soon {
+  background-color: transparent;
+  border-left: 5px solid var(--text-medium);
+  justify-content: center;
+  text-align: center;
+  font-style: italic;
+  color: var(--text-medium);
+  padding: 20px;
+}
+.styled-dates .concert-coming-soon p {
+  color: var(--text-medium);
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+.styled-dates .concert-coming-soon:hover {
+  background-color: transparent;
+  transform: none;
+}
+
+
+/* --- Lien "pink" --- */
+p.pink, a.pink {
+  color: var(--primary-color);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform var(--transition-medium) var(--bezier-curve);
+  display: inline-block;
+}
+p.pink:hover, a.pink:hover {
+  transform: translateX(5px);
+}
+
+
+/* --- Section Musique (Liens Plateformes avec Icones) --- */
+.music-links-container {
+  margin-top: 5em;
+  text-align: center;
+}
+
+.music-links-container h4 {
+  font-size: 1.5rem;
+  color: var(--text-light);
+  margin-bottom: 2em;
+  font-weight: 700;
+}
+
+.music-links-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px 25px;
+}
+
+.music-links-container li {
+  /* Pas de style ici */
+}
+
+.music-links-container a.music-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  background-color: var(--bg-dark);
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.music-links-container img.platform-icon {
+  width: 24px;  /* Taille icône remise à 24px */
+  height: 24px; /* Taille icône remise à 24px */
+  display: inline-block;
+  vertical-align: middle;
+  /* fill: currentColor; */
+}
+
+.music-links-container a.music-link:hover {
+  background-color: var(--primary-color);
+  color: var(--bg-dark);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(189, 230, 76, 0.4);
+}
+
+
+/* ============================================= */
+/* === FORMS (Newsletter & Contact) ========== */
+/* ============================================= */
+
+section.blocNewsletter { min-height: inherit; text-align: center; padding: 100px 15%; background: url("../img/background-newsletter.jpg") 50% 40% / cover no-repeat; }
+.newsletterForm { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0; }
+.newsletterForm input { color: var(--bg-dark); padding: 15px; border: solid var(--bg-dark) 3px; margin: 0; outline: none; font-size: 1rem; }
+.newsletterForm input[type=email] { flex-grow: 1; max-width: 400px; border-radius: 999px 0 0 999px; border-right: none; }
+.newsletterForm input[type=submit] { text-transform: uppercase; background-color: var(--text-light); border-radius: 0 999px 999px 0; cursor: pointer; transition: var(--transition-medium) var(--bezier-curve); white-space: nowrap; }
+.newsletterForm input[type=submit]:hover { color: var(--primary-color); background-color: var(--bg-dark); border-color: var(--primary-color); }
+.newsletterForm #hideNews { display: none; margin: 15px 0; width: 100%; text-align: center; }
+.newsletterForm #hideNews label { color: var(--text-medium); margin-right: 10px; }
+.newsletterForm #hideNews input[type=number] { border-radius: 999px; font-size: 0.9rem; background-color: var(--text-light); padding: 8px 12px; width: 100px; text-align: center; }
+
+/* --- Section Contact --- */
+.contact p.hardLight { text-align: center; }
+.contactForm { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; }
+.contactForm input, .contactForm textarea { color: var(--bg-dark); padding: 15px; width: 100%; max-width: 600px; border: none; font-family: inherit; outline: none; font-size: 1rem; border-radius: 5px; }
+.contactForm input[type=submit] { text-transform: uppercase; letter-spacing: 0.2rem; font-size: 1rem; cursor: pointer; transition: var(--transition-medium); background-color: var(--text-light); width: auto; padding: 15px 30px; border-radius: 999px; }
+.contactForm input[type=submit]:hover { color: var(--text-light); background-color: var(--primary-color); box-shadow: 0 4px 10px rgba(189, 230, 76, 0.4); }
+.contactForm p.labelP { color: var(--text-light); font-size: 1.1rem; font-weight: 700; margin: 20px 0 5px 0; }
+.contactForm .label { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
+.contactForm .inscriptionCheck { display: flex; align-items: center; margin: 0; }
+.contactForm .inscriptionCheck input[type=radio] { margin: 0 8px 0 0; width: auto; accent-color: var(--primary-color); cursor: pointer; }
+.contactForm .inscriptionCheck label { font-size: 1rem; font-weight: normal; color: var(--text-light); cursor: pointer; }
+.contactForm #helpNom, .contactForm #helpTel, .contactForm #helpMail, .contactForm #helpRobot { display: none; }
+.hidePara { margin: 10px auto 0 auto; color: var(--primary-color); font-weight: bold; min-height: 1.2em; text-align: center; width: 100%; max-width: 600px; }
+
+/* ============================================= */
+/* === FOOTER ================================ */
+/* ============================================= */
+
+footer {
+  text-align: center;
+  padding: 40px 5%;
+  background-color: var(--primary-color); /* Fond vert #bde64c */
+}
+footer p {
+  margin: 10px 0;
+  color: var(--bg-dark); /* Texte sombre */
+  font-size: 0.9rem;
+}
+footer p.bolder {
+  font-size: 1.1rem;
+  letter-spacing: 0.2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+footer .footerBaner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+footer .footerBaner p.bolder {
+  color: var(--bg-dark);
+}
+footer .footerBaner .bandBanner {
+  margin: 0 20px;
+  width: auto;
+  max-width: 60px;
+  height: auto;
+  cursor: default;
+}
+
+/* --- Social Banner Specific Styles --- */
+footer .socialBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px; /* Espace entre les icônes */
+  margin: 25px 0;
+}
+
+/* Style pour le lien contenant l'icône */
+footer .socialBanner a {
+  display: inline-block; /* Pour appliquer transform */
+  line-height: 0; /* Empêche hauteur superflue */
+  text-decoration: none; /* Enlève le soulignement hérité */
+  transition: transform var(--transition-fast); /* Transition sur le lien */
+}
+
+/* Effet au survol du lien */
+footer .socialBanner a:hover {
+  transform: scale(1.15); /* Agrandit le lien (et l'image dedans) */
+  /* Assurer que la couleur héritée n'interfère pas */
+  color: inherit;
+}
+
+/* Style pour l'image icône elle-même */
+footer .socialBanner a img {
+  display: block; /* Assure bon affichage */
+  max-width: 24px; /* Taille désirée */
+  height: 24px; /* Taille désirée */
+  /* Le filtre pour rendre les icônes "white" sombres sur le fond vert */
+  filter: brightness(0) saturate(100%) invert(7%) sepia(14%) saturate(184%) hue-rotate(200deg) brightness(96%) contrast(89%);
+  /* Si ce filtre ne marche pas bien, essaie juste : filter: invert(1) contrast(0.1) brightness(0.5); */
+  /* Ou si ce sont des SVG simples : fill: var(--bg-dark); et enlève le filter */
+}
+
+/* Liens généraux dans le footer (Mentions Légales) */
+footer p a { /* Cible plus spécifiquement les liens DANS les paragraphes */
+  color: var(--bg-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease; /* Ajoute transition pour hover */
+}
+footer p a:hover {
+  color: var(--text-light); /* Texte devient blanc au survol */
+}
+
+/* ============================================= */
+/* === UTILITIES (Up Arrow, Animations) ====== */
+/* ============================================= */
+
+#upArrow { display: none; position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; cursor: pointer; z-index: 1000; transition: transform var(--transition-fast); }
+#upArrow:hover { transform: translateY(-5px); }
+
+/* --- Animations ScrollMagic --- */
+.animatableY { opacity: 0; transform: translate3d(0, 3vh, 0); transition: var(--transition-slow) ease-in-out; }
+.animatableX { opacity: 0; transform: translate3d(-3vw, 0, 0); transition: var(--transition-slow) ease-in-out; }
+.animatableOpacity { opacity: 0; transition: var(--transition-slow) ease-in-out; }
+.showed { opacity: 1; transform: translate3d(0, 0, 0); }
+
+/* Keyframes */
+@keyframes opacity { from { opacity: 0; } to { opacity: 1; } }
+@keyframes animeLogo { 0% { transform: scale(1); } 10% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+/* ============================================= */
+/* === MEDIA QUERIES (Responsiveness) ======== */
+/* ============================================= */
+
+/* --- Tablette --- */
+@media screen and (max-width: 1024px) {
+  section { padding: 50px 10%; }
+  .hardLight { width: 85%; }
+  .imgContent { width: 90%; }
+  .contactForm input, .contactForm textarea { width: 80%; max-width: 500px; }
+  form.newsletterForm input[type=email] { max-width: 350px; }
+  /* Galerie Tablette */
+  .galleryContent { grid-template-columns: repeat(2, 1fr); }
+  /* Ajustement logo tablette */
+  .main-logo-container { max-width: 550px; }
+}
+
+/* --- Mobile Large --- */
+@media screen and (max-width: 767px) {
+  section { padding: 40px 5%; }
+  .separator { width: 40vw; margin: 30px 0; }
+  .shareBtn { display: none; }
+  footer .socialBanner { display: none; }
+  .hardLight { width: 95%; }
+  .imgContent { width: 100%; }
+  /* Ajustement logo mobile */
+  .main-logo-container { width: 80%; bottom: 30%; max-width: 400px; }
+  section.blocNewsletter { padding: 50px 5%; background-size: cover; background-position: center; }
+  .newsletterForm { flex-direction: column; gap: 10px; }
+  .newsletterForm input[type=email], .newsletterForm input[type=submit] { width: 90%; max-width: 350px; border-radius: 999px; border: solid var(--bg-dark) 3px; }
+  .newsletterForm input[type=submit] { margin-left: 0; }
+
+  /* Vidéos sur mobile */
+  .videos-container { flex-direction: column; align-items: center; gap: 40px; }
+  .video-wrapper { max-width: 95%; min-width: unset; flex-basis: auto; }
+
+  .contactForm input, .contactForm textarea { width: 95%; max-width: 400px; }
+  .imgContent .card a::before { display: none; }
+  /* Désactiver hover transformations specifiques */
+  p.pink:hover, a.pink:hover,
+  /* .date td a:hover, */
+  .newsletterForm input[type=submit]:hover,
+  .contactForm input[type=submit]:hover,
+  #upArrow:hover { transform: none; }
+  /* Restaurer style base boutons */
+   .newsletterForm input[type=submit]:hover { color: var(--bg-dark); background-color: var(--text-light); border-color: var(--bg-dark); }
+   .contactForm input[type=submit]:hover { color: var(--bg-dark); background-color: var(--text-light); letter-spacing: 0.2rem; box-shadow: none; }
+
+  /* Concerts sur mobile */
+  .styled-dates .concert-item { flex-direction: column; align-items: flex-start; text-align: left; padding: 15px 20px; }
+  .styled-dates .concert-venue { font-size: 1.3rem; }
+  .styled-dates .concert-city { font-size: 1rem; }
+  .styled-dates .concert-date { font-size: 0.9rem;}
+  .styled-dates .concert-coming-soon { align-items: center; text-align: center; }
+
+  .footerBaner { flex-direction: column; gap: 5px; }
+  .footerBaner .bandBanner { margin: 10px 0; max-width: 50px; }
+}
+
+/* --- Mobile Petit --- */
+@media screen and (max-width: 480px) {
+   .main-logo-container { width: 85%; bottom: 35%; max-width: 300px; }
+  .hardLight { font-size: 1.3rem; }
+  .styled-dates .concert-venue { font-size: 1.2rem; }
+  .styled-dates .concert-city { font-size: 0.9rem; }
+  .contactForm input, .contactForm textarea { max-width: none; }
+  /* Style pour les boutons plateformes musique */
+  .music-links-container a.music-link { padding: 10px 20px; font-size: 1rem; }
+  .music-links-container img.platform-icon { width: 20px; height: 20px; } /* Ajusté à 20px pour mobile */
+  .music-links-container ul { gap: 15px; }
+}
+
+/* --- Galerie Desktop --- */
+@media (min-width: 992px) {
+  .galleryContent { grid-template-columns: repeat(3, 1fr); }
+}
+
+/*# sourceMappingURL=style.css.map */
