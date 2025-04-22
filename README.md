@@ -1,57 +1,62 @@
-# :trollface: Free Rock Band Website Template :guitar:
+# Quart d'Heure Kiwi - Official Website :guitar:
 
 <p align="center">
-  <img width="500" height="283" src="./img/screenshots/desktop.png" alt="Illustrations web page desktop">
+  <!-- Optional: Update screenshots if the look has changed significantly -->
+  <img width="500" height="283" src="./img/screenshots/desktop.png" alt="Quart d'Heure Kiwi website - Desktop view">
 </p>
 <p align="center">
-  <img width="300" height="500" src="./img/screenshots/mobile.png" alt="Illustrations web page mobile">
+  <img width="300" height="500" src="./img/screenshots/mobile.png" alt="Quart d'Heure Kiwi website - Mobile view">
 </p>
-<p align="center">
-  <img width="300" height="500" src="./img/screenshots//mobile-menu.png" alt="Illustrations web page mobile menu">
-</p>
+<!-- Optional: Remove mobile menu screenshot if less relevant now -->
+<!-- <p align="center">
+  <img width="300" height="500" src="./img/screenshots/mobile-menu.png" alt="Quart d'Heure Kiwi website - Mobile menu">
+</p> -->
 
 
-:point_right:[Show webpage here](https://gtcore902.github.io/free-rock-band-website-template/):metal:
+:point_right: **Visit the live site:** [quartdheurekiwi.com](https://quartdheurekiwi.com/) | [quartdheurekiwi.fr](https://quartdheurekiwi.fr/) :metal:
 
-## :free: You can use this template for your Rock Band web site !
+## About This Site
 
-### How to ?
+This repository contains the source code for the official website of **Quart d'Heure Kiwi**, a *Punk Rock Approximatif* band.
 
-:one:
-```
-mkdir <your directory>
-git clone https://github.com/gtcore902/free-rock-band-website-template.git
-```
+The site is designed for fans to find music, photos, and concert dates, and for potential venues to get information and contact the band.
 
-:two: Updates in 'index.html' :
-* 'alt' attributes for img tags
-* input your band name in place of < your band name here >
-* your band name in h1 / h2 tags
-* your clip and clip name in video tag
+## Features & Sections
 
-:three: Update 'mainFunctions.js' file to input email address (line 55 / 56).
+*   **Hero Section:** Main band logo with social media links.
+*   **Music:** Embedded videos and links to streaming/social platforms (Spotify, Bandcamp, YouTube, etc.).
+*   **Gallery:** Photos of the band.
+*   **Le Groupe:** Information about the band members.
+*   **Concerts:** List of upcoming shows.
+*   **Contact:** Simple contact information with the band's email address and social links.
 
-:four: To update yours social network accounts, modify lines 316 / 322 / 326 in the same file.
+## Technology Stack
 
-:five: Then you need to update these variables in 'sendFormContact.php' in your code editor to use form sections:
-* $texte = "your site name" (line 11)
-* $destinataire = "your email"
-* $objet = "your band name"
-* line 19 = "email from to send form" (you can choose any)
-* $conf = "yours smtp informations"
+*   HTML5
+*   CSS3 (Utilizing CSS Variables, Flexbox, Grid, Animations)
+*   JavaScript (jQuery, LazyLoad for images, Rellax for parallax effect)
+*   Deployment: Hosted on [Netlify](https://www.netlify.com/) and automatically deployed from this GitHub repository.
 
-:six: Do the same actions in 'sendFormSubscription.php' file.
+## Development
 
-That's all:exclamation:
-Deploy this code on your server.
+To run the website locally for development or testing:
 
-### :sunglasses: Want to contribute :question:
+1.  **Clone this repository:**
+    ```bash
+    git clone <URL of THIS repository>
+    ```
+    *(Replace `<URL of THIS repository>` with the actual URL, e.g., `https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git`)*
 
-Fork this repository :stuck_out_tongue_winking_eye:
-```
-mkdir <your directory>
-git clone https://github.com/gtcore902/free-rock-band-website-template.git
-git checkout -b newfeature
-git commit -am 'your feature'
-git push origin newfeature
-```
+2.  **Navigate into the directory:**
+    ```bash
+    cd <repository-directory-name>
+    ```
+
+3.  **Open `index.html`:**
+    Open the `index.html` file directly in your web browser. Most features should work, but browser security might affect certain interactions when run as a local file compared to being served.
+
+*(Note: This site is static and does not require a complex build process or backend server.)*
+
+---
+
+*This website was originally based on the [Free Rock Band Website Template](https://github.com/gtcore902/free-rock-band-website-template) by gtcore902, but has been significantly modified.*

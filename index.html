@@ -258,48 +258,52 @@
   <!-- <a id="newsletter"></a> -->
   <!-- <section class="blocNewsletter"> ... -->
 
-  <!-- SECTION NEWSLETTER -->
-  <section class="blocNewsletter">
-    <h2 class="miniTitle animatableY">Restez informés</h2>
-    <p class="miniPara animatableY"><br />Ne manquez pas nos prochains concerts</p>
-    <form class="newsletterForm animatableY">
-      <input aria-label="Entrez votre email" type="email" name="emailNews" id="emailNews" value="" placeholder="Email" required>
-      <input type="submit" name="valider" value="S'inscrire">
-      <div id="hideNews">
-        <div><label class="miniPara" for="checkRobotNews">Êtes-vous humain ?</label></div>
-        <div><input type="number" id="checkRobotNews" name="checkRobotNews" value="" placeholder="Résultat de 4 + 3 ?"></div>
-      </div>
-      <p class="hidePara" aria-hidden="true" id="helpMailNews"></p>
-    </form>
-    <p aria-hidden="true" id="retourNewsFormulaire"></p>
-  </section> <!-- Fin de blocNewsletter -->
 
-  <!-- SECTION CONTACT -->
-  <a id="contact"></a>
-  <section class="contact">
-    <h2 class="animatableX">Contact</h2>
-    <div class="separator animatableOpacity"></div>
-    <p class="hardLight">- Quart d'Heure Kiwi -</p>
-    <p id="insertMail" class="hardLight"></p>
-    <form class="contactForm">
-      <input aria-label="Saisissez votre nom" type="text" id="nom" name="nom" value="" required placeholder="Nom">
-      <p class="hidePara" aria-hidden="true" id="helpNom"></p>
-      <input aria-label="Saisissez votre numéro de téléphone (optionnel)" type="text" id="telephone" name="telephone" value="" placeholder="Téléphone">
-      <p class="hidePara" aria-hidden="true" id="helpTel"></p>
-      <input aria-label="Saisissez votre adresse email" type="email" id="mail" name="mail" value="" required placeholder="Email">
-      <p class="hidePara" aria-hidden="true" id="helpMail"></p>
-      <textarea aria-label="Entrez votre message" id="message" name="message" rows="8" cols="80" placeholder="Message"></textarea>
-      <p class="labelP">S'inscrire à la newsletter ?</p>
-      <div class="label">
-        <div class="inscriptionCheck"><input type="radio" id="oui" name="newsletter" value="oui" checked><label for="oui">Oui</label></div>
-        <div class="inscriptionCheck"><input type="radio" id="non" name="newsletter" value="non"><label for="non">Non</label></div>
-      </div>
-      <input type="number" id="checkRobot" aria-label="Contrôle anti robot : Saisissez le résultat de 3 + 4" name="checkRobot" value="" placeholder="Résultat de 3 + 4">
-      <p class="hidePara" aria-hidden="true" id="helpRobot"></p>
-      <input type="submit" name="valider" value="Envoyer">
-    </form>
-    <p class="hidePara" aria-hidden="true" id="retourFormulaire"></p>
-  </section> <!-- Fin de contact -->
+<!-- SECTION CONTACT -->
+<a id="contact"></a>
+<section class="contact">
+  <h2 class="animatableX">Contact</h2>
+  <div class="separator animatableOpacity"></div>
+
+  <!-- Simple contact info -->
+  <p class="contact-intro animatableY">
+      Pour toute demande (booking, infos, mots doux...), envoyez-nous un email :
+  </p>
+  <p class="contact-email animatableY">
+      <a href="mailto:quartdheurekiwi@gmail.com">quartdheurekiwi@gmail.com</a>
+  </p>
+  <p class="contact-follow animatableY">
+      Vous pouvez aussi nous suivre sur nos réseaux sociaux !
+  </p>
+
+
+  <!-- Add this block for social icons -->
+  <!-- Updated block for social icons - now styled as buttons -->
+  <div class="contact-socials animatableY">
+      <a href="https://www.facebook.com/profile.php?id=61572525863747" target="_blank" rel="noopener noreferrer" title="Quart d'Heure Kiwi sur Facebook" class="music-link facebook-link">
+          <img src="img/icons/facebook-icon.svg" alt="Facebook Logo" class="platform-icon"> <!-- Use icon consistent with music section -->
+          <span>Facebook</span>
+      </a>
+      <a href="https://www.instagram.com/quartdheure.kiwi/" target="_blank" rel="noopener noreferrer" title="Quart d'Heure Kiwi sur Instagram" class="music-link instagram-link">
+          <img src="img/icons/instagram-icon.svg" alt="Instagram Logo" class="platform-icon"> <!-- Use icon consistent with music section -->
+          <span>Instagram</span>
+      </a>
+      <!-- Add YouTube/Spotify here too if desired, following the same pattern -->
+      <!--
+      <a href="https://www.youtube.com/@QuartdHeureKiwi" target="_blank" rel="noopener noreferrer" title="Voir Quart d'Heure Kiwi sur YouTube" class="music-link youtube-link">
+         <img src="img/icons/youtube-icon.svg" alt="YouTube Logo" class="platform-icon">
+        <span>YouTube</span>
+      </a>
+       <a href="https://open.spotify.com/artist/YOUR_SPOTIFY_ID" class="music-link spotify-link" target="_blank" rel="noopener noreferrer" title="Écouter Quart d'Heure Kiwi sur Spotify">
+        <img src="img/icons/spotify-icon.svg" alt="Spotify Logo" class="platform-icon">
+        <span>Spotify</span>
+      </a>
+      -->
+  </div>
+  <!-- End of updated block -->
+
+
+</section> <!-- Fin de contact -->
 
   <!-- Flèche retour haut -->
   <img id="upArrow" src="./img/upArrow.svg" alt="Retour haut du site">
@@ -312,25 +316,7 @@
       <p class="bolder">2025</p> <!-- Ou 2024 -->
     </div>
     <p class="bolder">Quart d'Heure Kiwi</p>
-    <div class="socialBanner">
-      <!-- Lien Facebook -->
-      <a href="https://www.facebook.com/profile.php?id=61572525863747" target="_blank" rel="noopener noreferrer" title="Quart d'Heure Kiwi sur Facebook">
-        <img class="facebook" src="img/facebook-white.svg" alt="Quart d'Heure Kiwi sur Facebook">
-      </a>
-      <!-- Lien Instagram -->
-      <a href="https://www.instagram.com/quartdheure.kiwi/" target="_blank" rel="noopener noreferrer" title="Quart d'Heure Kiwi sur Instagram">
-        <img class="instagram" src="img/instagram-white.svg" alt="Quart d'Heure Kiwi sur Instagram">
-      </a>
-      <!-- Lien YouTube -->
-      <a href="https://www.youtube.com/@QuartdHeureKiwi" target="_blank" rel="noopener noreferrer" title="Voir Quart d'Heure Kiwi sur YouTube">
-        <img class="youtube" src="img/youtube-white.svg" alt="Quart d'Heure Kiwi sur YouTube">
-      </a>
-      <!-- Lien Spotify (Optionnel, si tu as l'icône) -->
-      <!--
-      <a href="https://open.spotify.com/artist/1a2b3c4d5e6f7g" target="_blank" rel="noopener noreferrer" title="Écouter Quart d'Heure Kiwi sur Spotify">
-        <img class="spotify" src="img/spotify-white.svg" alt="Quart d'Heure Kiwi sur Spotify">
-      </a>
-      -->
+
     </div>
     <p>Copyright 2025 | <a href="#">Mentions légales</a></p> <!-- Ou 2024 -->
   </footer><!-- Fin de footer -->

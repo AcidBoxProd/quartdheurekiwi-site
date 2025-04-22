@@ -70,7 +70,7 @@ section {
   background-color: var(--primary-color);
 }
 
-/* Placeholders */
+/* Placeholders - Kept in case they are needed elsewhere */
 ::-webkit-input-placeholder,
 ::-moz-placeholder,
 :-ms-input-placeholder,
@@ -89,8 +89,9 @@ section {
   min-height: 100vh;
   width: 100%; /* Force la largeur complète */
   color: var(--text-medium);
-  background: url("../img/bcc-free-template-rock-hard.jpg") center/cover no-repeat;
-  background-color: var(--bg-dark);
+  /* Default background for desktop */
+  background: url("../img/bcc-free-template-rock-hard.jpg") center center / cover no-repeat;
+  background-color: var(--bg-dark); /* Fallback color */
   overflow: hidden; /* Important pour Rellax et position absolue */
   margin: 0;
   padding: 0;
@@ -210,36 +211,35 @@ section {
 
 /* Conteneur extérieur pour appliquer Rellax */
 .rellax-wrapper {
-  position: absolute; /* Se positionne par rapport à .mainView */
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1; /* Derrière les boutons, au même niveau que le logo */
-  pointer-events: none; /* Permet aux clics de passer au travers */
-  /* Pas besoin d'autres styles, Rellax gère le transform */
+  z-index: 1;
+  pointer-events: none;
 }
 
 /* Conteneur intérieur pour le logo et son centrage */
 .main-logo-container {
-  position: absolute; /* Se positionne par rapport à .rellax-wrapper ou .mainView */
-  width: 70%; /* Largeur relative */
-  max-width: 650px; /* Limite taille max */
+  position: absolute;
+  width: 70%;
+  max-width: 650px;
   left: 50%;
-  top: 70%; /* Centrage vertical */
-  transform: translate(-50%, -50%); /* Centrage H et V final */
+  top: 70%;
+  transform: translate(-50%, -50%);
   opacity: 0;
   animation: opacity 2s cubic-bezier(0.17, 0.67, 0.14, 0.97) 1s both;
-  z-index: 1; /* Même niveau que le wrapper */
+  z-index: 1;
   text-align: center;
-  pointer-events: auto; /* Assure que le logo reste interactif si besoin */
+  pointer-events: auto;
 }
 
 .main-logo-container img {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: 0 auto; /* Centrage dans le conteneur */
+  margin: 0 auto;
 }
 
 
@@ -256,7 +256,6 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
 .imgContent { display: flex; flex-wrap: wrap; justify-content: space-around; align-items: flex-start; gap: 30px; margin: 50px auto; width: 80%; }
 .imgContent .card { display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1 1 200px; max-width: 250px; }
 .imgContent .card a { display: block; position: relative; margin-bottom: 15px; border-radius: 15px; overflow: hidden; }
-/* Pas d'effet ::before */
 .imgContent .card img { display: block; width: 100%; max-width: 250px; height: auto; border-radius: 15px; }
 .imgContent .card p { text-align: center; margin: 0; padding: 0; line-height: 1.3; }
 .imgContent .card p:first-of-type { font-size: 1.3rem; color: var(--text-light); font-weight: 700; }
@@ -316,7 +315,7 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
 
 .galleryContent a.gallery-item-link:hover {
   transform: scale(1.05);
-  box-shadow: 0 5px 15px rgba(189, 230, 76, 0.3); /* Ombre couleur primaire */
+  box-shadow: 0 5px 15px rgba(189, 230, 76, 0.3);
   cursor: pointer;
 }
 
@@ -423,7 +422,7 @@ p.pink:hover, a.pink:hover {
 }
 
 
-/* --- Section Musique (Liens Plateformes avec Icones) --- */
+/* --- Section Musique Specific Container Styles --- */
 .music-links-container {
   margin-top: 5em;
   text-align: center;
@@ -450,7 +449,8 @@ p.pink:hover, a.pink:hover {
   /* Pas de style ici */
 }
 
-.music-links-container a.music-link {
+/* --- GLOBAL Button Style (used in Music & Contact) --- */
+a.music-link {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -458,22 +458,22 @@ p.pink:hover, a.pink:hover {
   background-color: var(--bg-dark);
   color: var(--primary-color);
   border: 2px solid var(--primary-color);
-  border-radius: 999px;
+  border-radius: 999px; /* Pill shape */
   font-weight: 700;
   font-size: 1.1rem;
   text-decoration: none;
   transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
 }
 
-.music-links-container img.platform-icon {
-  width: 24px;  /* Taille icône remise à 24px */
-  height: 24px; /* Taille icône remise à 24px */
+img.platform-icon {
+  width: 24px;
+  height: 24px;
   display: inline-block;
   vertical-align: middle;
-  /* fill: currentColor; */
+  /* fill: currentColor; /* May be needed for SVGs */
 }
 
-.music-links-container a.music-link:hover {
+a.music-link:hover {
   background-color: var(--primary-color);
   color: var(--bg-dark);
   transform: translateY(-3px) scale(1.02);
@@ -482,32 +482,91 @@ p.pink:hover, a.pink:hover {
 
 
 /* ============================================= */
-/* === FORMS (Newsletter & Contact) ========== */
+/* === FORMS (Removed - Simplified Contact) == */
 /* ============================================= */
 
-section.blocNewsletter { min-height: inherit; text-align: center; padding: 100px 15%; background: url("../img/background-newsletter.jpg") 50% 40% / cover no-repeat; }
-.newsletterForm { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0; }
-.newsletterForm input { color: var(--bg-dark); padding: 15px; border: solid var(--bg-dark) 3px; margin: 0; outline: none; font-size: 1rem; }
-.newsletterForm input[type=email] { flex-grow: 1; max-width: 400px; border-radius: 999px 0 0 999px; border-right: none; }
-.newsletterForm input[type=submit] { text-transform: uppercase; background-color: var(--text-light); border-radius: 0 999px 999px 0; cursor: pointer; transition: var(--transition-medium) var(--bezier-curve); white-space: nowrap; }
-.newsletterForm input[type=submit]:hover { color: var(--primary-color); background-color: var(--bg-dark); border-color: var(--primary-color); }
-.newsletterForm #hideNews { display: none; margin: 15px 0; width: 100%; text-align: center; }
-.newsletterForm #hideNews label { color: var(--text-medium); margin-right: 10px; }
-.newsletterForm #hideNews input[type=number] { border-radius: 999px; font-size: 0.9rem; background-color: var(--text-light); padding: 8px 12px; width: 100px; text-align: center; }
+/* --- Section Contact (Simplified) --- */
+.contact {
+  text-align: center;
+  padding-top: 50px;
+  padding-bottom: 80px;
+}
 
-/* --- Section Contact --- */
-.contact p.hardLight { text-align: center; }
-.contactForm { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; }
-.contactForm input, .contactForm textarea { color: var(--bg-dark); padding: 15px; width: 100%; max-width: 600px; border: none; font-family: inherit; outline: none; font-size: 1rem; border-radius: 5px; }
-.contactForm input[type=submit] { text-transform: uppercase; letter-spacing: 0.2rem; font-size: 1rem; cursor: pointer; transition: var(--transition-medium); background-color: var(--text-light); width: auto; padding: 15px 30px; border-radius: 999px; }
-.contactForm input[type=submit]:hover { color: var(--text-light); background-color: var(--primary-color); box-shadow: 0 4px 10px rgba(189, 230, 76, 0.4); }
-.contactForm p.labelP { color: var(--text-light); font-size: 1.1rem; font-weight: 700; margin: 20px 0 5px 0; }
-.contactForm .label { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; }
-.contactForm .inscriptionCheck { display: flex; align-items: center; margin: 0; }
-.contactForm .inscriptionCheck input[type=radio] { margin: 0 8px 0 0; width: auto; accent-color: var(--primary-color); cursor: pointer; }
-.contactForm .inscriptionCheck label { font-size: 1rem; font-weight: normal; color: var(--text-light); cursor: pointer; }
-.contactForm #helpNom, .contactForm #helpTel, .contactForm #helpMail, .contactForm #helpRobot { display: none; }
-.hidePara { margin: 10px auto 0 auto; color: var(--primary-color); font-weight: bold; min-height: 1.2em; text-align: center; width: 100%; max-width: 600px; }
+.contact h2 {
+    /* Styles for the H2 are inherited or can be added here */
+}
+
+.contact .separator {
+  margin-left: auto;
+  margin-right: auto;
+  width: 20vw;
+  max-width: 200px;
+  height: 2px;
+  margin-top: 50px;
+  margin-bottom: 50px;
+  background-color: var(--primary-color);
+}
+
+.contact p {
+    margin: 0 auto;
+    max-width: 600px;
+    line-height: 1.6;
+    color: var(--text-medium);
+}
+
+.contact p.contact-intro {
+  font-size: 1.1rem;
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+
+.contact p.contact-email {
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  font-weight: 700;
+  margin-top: 0.5em;
+  margin-bottom: 1em;
+  color: var(--text-light);
+  word-wrap: break-word;
+}
+
+.contact p.contact-email a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.3s ease, border-color 0.3s ease;
+  padding-bottom: 2px;
+  font-weight: inherit;
+  font-size: inherit;
+}
+
+.contact p.contact-email a:hover,
+.contact p.contact-email a:focus {
+  color: var(--text-light);
+  border-bottom-color: var(--text-light);
+}
+
+.contact p.contact-follow {
+  font-size: 1rem;
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+.contact .contact-socials {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px 25px;
+  margin-top: 2.5em;
+  margin-bottom: 2em;
+}
+
+.contact .animatableY,
+.contact .animatableX,
+.contact .animatableOpacity {
+    /* Animation properties are defined elsewhere */
+}
+
 
 /* ============================================= */
 /* === FOOTER ================================ */
@@ -516,11 +575,11 @@ section.blocNewsletter { min-height: inherit; text-align: center; padding: 100px
 footer {
   text-align: center;
   padding: 40px 5%;
-  background-color: var(--primary-color); /* Fond vert #bde64c */
+  background-color: var(--primary-color);
 }
 footer p {
   margin: 10px 0;
-  color: var(--bg-dark); /* Texte sombre */
+  color: var(--bg-dark);
   font-size: 0.9rem;
 }
 footer p.bolder {
@@ -546,57 +605,23 @@ footer .footerBaner .bandBanner {
   cursor: default;
 }
 
-/* --- Social Banner Specific Styles --- */
-footer .socialBanner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px; /* Espace entre les icônes */
-  margin: 25px 0;
-}
+/* --- Social Banner REMOVED --- */
 
-/* Style pour le lien contenant l'icône */
-footer .socialBanner a {
-  display: inline-block; /* Pour appliquer transform */
-  line-height: 0; /* Empêche hauteur superflue */
-  text-decoration: none; /* Enlève le soulignement hérité */
-  transition: transform var(--transition-fast); /* Transition sur le lien */
-}
-
-/* Effet au survol du lien */
-footer .socialBanner a:hover {
-  transform: scale(1.15); /* Agrandit le lien (et l'image dedans) */
-  /* Assurer que la couleur héritée n'interfère pas */
-  color: inherit;
-}
-
-/* Style pour l'image icône elle-même */
-footer .socialBanner a img {
-  display: block; /* Assure bon affichage */
-  max-width: 24px; /* Taille désirée */
-  height: 24px; /* Taille désirée */
-  /* Le filtre pour rendre les icônes "white" sombres sur le fond vert */
-  filter: brightness(0) saturate(100%) invert(7%) sepia(14%) saturate(184%) hue-rotate(200deg) brightness(96%) contrast(89%);
-  /* Si ce filtre ne marche pas bien, essaie juste : filter: invert(1) contrast(0.1) brightness(0.5); */
-  /* Ou si ce sont des SVG simples : fill: var(--bg-dark); et enlève le filter */
-}
-
-/* Liens généraux dans le footer (Mentions Légales) */
-footer p a { /* Cible plus spécifiquement les liens DANS les paragraphes */
+footer p a {
   color: var(--bg-dark);
   text-decoration: underline;
   text-underline-offset: 3px;
-  transition: color 0.2s ease; /* Ajoute transition pour hover */
+  transition: color 0.2s ease;
 }
 footer p a:hover {
-  color: var(--text-light); /* Texte devient blanc au survol */
+  color: var(--text-light);
 }
 
 /* ============================================= */
 /* === UTILITIES (Up Arrow, Animations) ====== */
 /* ============================================= */
 
-#upArrow { display: none; position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; cursor: pointer; z-index: 1000; transition: transform var(--transition-fast); }
+#upArrow { display: none; position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px; cursor: pointer; z-index: 1000; transition: transform var(--transition-fast), opacity 0.3s ease; }
 #upArrow:hover { transform: translateY(-5px); }
 
 /* --- Animations ScrollMagic --- */
@@ -618,46 +643,42 @@ footer p a:hover {
   section { padding: 50px 10%; }
   .hardLight { width: 85%; }
   .imgContent { width: 90%; }
-  .contactForm input, .contactForm textarea { width: 80%; max-width: 500px; }
-  form.newsletterForm input[type=email] { max-width: 350px; }
-  /* Galerie Tablette */
   .galleryContent { grid-template-columns: repeat(2, 1fr); }
-  /* Ajustement logo tablette */
   .main-logo-container { max-width: 550px; }
 }
 
 /* --- Mobile Large --- */
 @media screen and (max-width: 767px) {
   section { padding: 40px 5%; }
-  .separator { width: 40vw; margin: 30px 0; }
+  .separator { width: 40vw; margin: 30px auto; }
   .shareBtn { display: none; }
-  footer .socialBanner { display: none; }
   .hardLight { width: 95%; }
   .imgContent { width: 100%; }
-  /* Ajustement logo mobile */
-  .main-logo-container { width: 80%; bottom: 30%; max-width: 400px; }
-  section.blocNewsletter { padding: 50px 5%; background-size: cover; background-position: center; }
-  .newsletterForm { flex-direction: column; gap: 10px; }
-  .newsletterForm input[type=email], .newsletterForm input[type=submit] { width: 90%; max-width: 350px; border-radius: 999px; border: solid var(--bg-dark) 3px; }
-  .newsletterForm input[type=submit] { margin-left: 0; }
+  .main-logo-container { width: 80%; top: 70%; max-width: 400px; } /* Adjusted top slightly, check visual */
 
-  /* Vidéos sur mobile */
+  /* Adjust hero background for mobile */
+  .mainView {
+    /* background-image: url(...); /* Keep original image */
+    background-size: 180% auto; /* Scale width to 100%, height auto */
+    background-position: center center; /* Center the scaled image */
+    background-repeat: no-repeat;
+    /* Optionally adjust min-height if needed */
+    /* min-height: 90vh; */
+  }
+
   .videos-container { flex-direction: column; align-items: center; gap: 40px; }
   .video-wrapper { max-width: 95%; min-width: unset; flex-basis: auto; }
 
-  .contactForm input, .contactForm textarea { width: 95%; max-width: 400px; }
   .imgContent .card a::before { display: none; }
-  /* Désactiver hover transformations specifiques */
   p.pink:hover, a.pink:hover,
-  /* .date td a:hover, */
-  .newsletterForm input[type=submit]:hover,
-  .contactForm input[type=submit]:hover,
+  a.music-link:hover,
   #upArrow:hover { transform: none; }
-  /* Restaurer style base boutons */
-   .newsletterForm input[type=submit]:hover { color: var(--bg-dark); background-color: var(--text-light); border-color: var(--bg-dark); }
-   .contactForm input[type=submit]:hover { color: var(--bg-dark); background-color: var(--text-light); letter-spacing: 0.2rem; box-shadow: none; }
+  a.music-link:hover {
+      background-color: var(--primary-color);
+      color: var(--bg-dark);
+      box-shadow: none;
+  }
 
-  /* Concerts sur mobile */
   .styled-dates .concert-item { flex-direction: column; align-items: flex-start; text-align: left; padding: 15px 20px; }
   .styled-dates .concert-venue { font-size: 1.3rem; }
   .styled-dates .concert-city { font-size: 1rem; }
@@ -666,19 +687,36 @@ footer p a:hover {
 
   .footerBaner { flex-direction: column; gap: 5px; }
   .footerBaner .bandBanner { margin: 10px 0; max-width: 50px; }
+
+  .contact .contact-email { font-size: 1.2rem; }
 }
 
 /* --- Mobile Petit --- */
 @media screen and (max-width: 480px) {
-   .main-logo-container { width: 85%; bottom: 35%; max-width: 300px; }
+  .main-logo-container { width: 85%; top: 65%; max-width: 300px; } /* Adjusted top more, check visual */
   .hardLight { font-size: 1.3rem; }
   .styled-dates .concert-venue { font-size: 1.2rem; }
   .styled-dates .concert-city { font-size: 0.9rem; }
-  .contactForm input, .contactForm textarea { max-width: none; }
-  /* Style pour les boutons plateformes musique */
-  .music-links-container a.music-link { padding: 10px 20px; font-size: 1rem; }
-  .music-links-container img.platform-icon { width: 20px; height: 20px; } /* Ajusté à 20px pour mobile */
+
+  /* Adjust hero background for small mobile */
+  .mainView {
+     /* Same adjustment as mobile large, could refine further if needed */
+     background-size: 180% auto;
+     background-position: center center;
+     background-repeat: no-repeat;
+     /* Optionally adjust min-height */
+     /* min-height: 85vh; */
+  }
+
+  /* Global button adjustments for small mobile */
+  a.music-link { padding: 10px 20px; font-size: 1rem; }
+  img.platform-icon { width: 20px; height: 20px; }
+  /* Container gap adjustments */
   .music-links-container ul { gap: 15px; }
+  .contact .contact-socials { gap: 15px; }
+
+  .contact .contact-email { font-size: 1.1rem; }
+  .contact .contact-intro, .contact .contact-follow { font-size: 0.9rem; }
 }
 
 /* --- Galerie Desktop --- */
