@@ -471,6 +471,17 @@ function resizeGame_FN() {
         return;
     }
 
+    // --- SET CONTAINER HEIGHTS DYNAMICALLY ---
+    if (pageRotator) {
+        pageRotator.style.height = vpH + 'px';
+    }
+    if (scalerWrapper) {
+        scalerWrapper.style.height = vpH + 'px';
+        // Ensure width is also set if not 100vw or if issues arise
+        scalerWrapper.style.width = vpW + 'px';
+    }
+    // --- END SET CONTAINER HEIGHTS ---
+
     let wasInPortrait = rotatePrompt.style.display === 'flex' || !rotatePrompt.classList.contains('hidden');
 
     if (isLandscape) {
@@ -509,18 +520,38 @@ function resizeGame_FN() {
         }
     }
 
-    // Scaling logic (remains the same)
-    if (scalerWrapper.style.display === 'flex') {
-        if (homeScreen && !homeScreen.classList.contains('hidden')) { const s = Math.min(vpW / HOME_SCREEN_DESIGN_WIDTH_CONST, vpH / HOME_SCREEN_DESIGN_HEIGHT_CONST); homeScreen.style.transform = `scale(${s})`; }
-        else if (homeScreen) { homeScreen.style.transform = 'scale(1)'; }
-        // ... (rest of scaling logic for other screens) ...
-        if (settingsMenuScreen && !settingsMenuScreen.classList.contains('hidden')) { const s = Math.min(vpW / HOME_SCREEN_DESIGN_WIDTH_CONST, vpH / HOME_SCREEN_DESIGN_HEIGHT_CONST); settingsMenuScreen.style.transform = `scale(${s})`; }
-        else if (settingsMenuScreen) { settingsMenuScreen.style.transform = 'scale(1)'; }
-        if (characterSelectionScreen && !characterSelectionScreen.classList.contains('hidden')) { const s = Math.min(vpW / CHAR_SELECT_DESIGN_WIDTH_CONST, vpH / CHAR_SELECT_DESIGN_HEIGHT_CONST); characterSelectionScreen.style.transform = `scale(${s})`; }
-        else if (characterSelectionScreen) { characterSelectionScreen.style.transform = 'scale(1)'; }
-        if (gameContainer && !gameContainer.classList.contains('hidden')) { currentScale = Math.min(vpW / GAME_DESIGN_WIDTH_CONST, vpH / GAME_DESIGN_HEIGHT_CONST); gameContainer.style.transform = `scale(${currentScale})`; }
-        else if (gameContainer) { gameContainer.style.transform = 'scale(1)'; }
-    } else {
+     // Scaling logic (This part is crucial and should now work better)
+    if (scalerWrapper.style.display === 'flex') { // Only scale if scalerWrapper is visible
+        // The vpW and vpH used here are now the dimensions of scalerWrapper
+        if (homeScreen && !homeScreen.classList.contains('hidden')) {
+            const s = Math.min(vpW / HOME_SCREEN_DESIGN_WIDTH_CONST, vpH / HOME_SCREEN_DESIGN_HEIGHT_CONST);
+            homeScreen.style.transform = `scale(${s})`;
+        } else if (homeScreen) {
+            homeScreen.style.transform = 'scale(1)'; // Reset if hidden
+        }
+
+        if (settingsMenuScreen && !settingsMenuScreen.classList.contains('hidden')) {
+            const s = Math.min(vpW / HOME_SCREEN_DESIGN_WIDTH_CONST, vpH / HOME_SCREEN_DESIGN_HEIGHT_CONST);
+            settingsMenuScreen.style.transform = `scale(${s})`;
+        } else if (settingsMenuScreen) {
+            settingsMenuScreen.style.transform = 'scale(1)';
+        }
+
+        if (characterSelectionScreen && !characterSelectionScreen.classList.contains('hidden')) {
+            const s = Math.min(vpW / CHAR_SELECT_DESIGN_WIDTH_CONST, vpH / CHAR_SELECT_DESIGN_HEIGHT_CONST);
+            characterSelectionScreen.style.transform = `scale(${s})`;
+        } else if (characterSelectionScreen) {
+            characterSelectionScreen.style.transform = 'scale(1)';
+        }
+
+        if (gameContainer && !gameContainer.classList.contains('hidden')) {
+            currentScale = Math.min(vpW / GAME_DESIGN_WIDTH_CONST, vpH / GAME_DESIGN_HEIGHT_CONST);
+            gameContainer.style.transform = `scale(${currentScale})`;
+        } else if (gameContainer) {
+            gameContainer.style.transform = 'scale(1)';
+        }
+    } else { // If scalerWrapper is not visible (e.g., in portrait showing rotate prompt)
+        // Reset scales to prevent potential layout issues if they were previously scaled
         if (homeScreen) homeScreen.style.transform = 'scale(1)';
         if (settingsMenuScreen) settingsMenuScreen.style.transform = 'scale(1)';
         if (characterSelectionScreen) characterSelectionScreen.style.transform = 'scale(1)';
