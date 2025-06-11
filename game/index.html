@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Quart d'Heure Kiwi Run</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+<div id="splash-screen">
+    <!-- Optional: <img src="img/your-logo-for-splash.png" alt="Loading..." /> -->
+    <div id="splash-button-container">
+        <button id="splash-start-button" type="button">PLAY !</button>
+    </div>
+</div>
+
+    <!-- Audio Elements -->
+    <audio id="background-music" loop preload="auto">
+        <source src="audio/quart-dheure-kiwi-theme.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="invincibility-music" loop preload="auto">
+        <source src="audio/invincibility-music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="menu-music" loop preload="auto">
+        <source src="audio/menu-theme.mp3" type="audio/mpeg"> <!-- Ensure this path is correct -->
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="sfx-jump" preload="auto"><source src="audio/jump-sfx.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-beer" preload="auto"><source src="audio/beer-collect-sfx.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-kiwi" preload="auto"><source src="audio/kiwi-collect-sfx.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-hit" preload="auto"><source src="audio/hit-sfx.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-boost" preload="auto"><source src="audio/boost-activate-sfx.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-game-over" preload="auto"><source src="audio/game-over-sfx.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-wall-break" preload="auto"><source src="audio/wall-break-sfx.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-slide" preload="auto"><source src="audio/slide-sfx.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-coin" preload="auto"><source src="audio/coin.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-footstep-1" preload="auto"><source src="audio/footstep-sfx-1.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-footstep-2" preload="auto"><source src="audio/footstep-sfx-2.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-footstep-3" preload="auto"><source src="audio/footstep-sfx-3.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-footstep-4" preload="auto"><source src="audio/footstep-sfx-4.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-button-click" preload="auto"><source src="audio/button-click-sfx.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-char-select-confirm" preload="auto"><source src="audio/char-select-confirm-sfx.mp3" type="audio/mpeg"></audio>
+    <!-- End Audio Elements -->
+
+    <div id="rotate-prompt" class="hidden"> <!-- Initially hidden, JS/CSS will manage -->
+        <p>Veuillez faire pivoter votre appareil en mode paysage.</p>
+    </div>
+
+    <div id="page-rotator"> <!-- This contains scaler-wrapper -->
+        <div id="scaler-wrapper"> <!-- This contains all game screens -->
+            <div id="home-screen" class="hidden">
+                <button id="home-start-image-button" class="home-image-button" aria-label="Start Game"></button>
+                <button id="home-menu-image-button" class="home-image-button" aria-label="Open Menu"></button>
+            </div>
+
+            <div id="settings-menu-screen" class="hidden">
+                <div class="setting-item" style="display: none;">
+                    <span>Music</span><label class="switch"><input type="checkbox" id="music-toggle" checked><span class="slider round"></span></label>
+                </div>
+                <div class="setting-item" style="display: none;">
+                    <span>SFX</span><label class="switch"><input type="checkbox" id="sfx-toggle" checked><span class="slider round"></span></label>
+                </div>
+                <button id="settings-back-image-button" class="settings-image-button" aria-label="Back to Home"></button>
+                <button id="settings-music-toggle-area" class="settings-image-button" aria-label="Toggle Music"></button>
+                <button id="settings-sfx-toggle-area" class="settings-image-button" aria-label="Toggle SFX"></button>
+            </div>
+
+            <div id="character-selection-screen" class="hidden">
+                <button id="char-select-back-home-button" aria-label="Back to Home"></button>
+                <p class="high-score-display">High Score: <span id="char-select-high-score">0</span></p>
+                <div class="character-slot-container" data-char="char1" aria-label="Select Raphaël"><div class="char-sprite-animation"></div></div>
+                <div class="character-slot-container" data-char="char2" aria-label="Select Mick"><div class="char-sprite-animation"></div></div>
+                <div class="character-slot-container" data-char="char3" aria-label="Select Thibault"><div class="char-sprite-animation"></div></div>
+                <div class="character-slot-container" data-char="char4" aria-label="Select Simon"><div class="char-sprite-animation"></div></div>
+                <div id="char-select-screen-overlay" class="hidden"></div>
+                <p id="loading-message" class="hidden">Loading assets...</p>
+            </div>
+
+            <div id="game-container" class="hidden">
+                <div id="ceiling"></div>
+                <div id="bg-layer-1" class="bg-layer"></div>
+                <div id="bg-layer-2" class="bg-layer"></div>
+                <div id="start-wall"></div>
+                <div id="ui-top-bar">
+                    <div id="heart-container"></div>
+                    <div id="score-board">SCORE: <span id="score">0</span></div>
+                </div>
+                <div id="power-gauge-container">
+                    <div id="power-gauge-fill"></div>
+                    <span id="power-gauge-text">BOOST</span>
+                </div>
+                <div id="ground"></div>
+                <div id="player"></div>
+                <div id="player-shadow"></div>
+                <div id="player-hitbox-debug" class="debug-hitbox player-debug"></div>
+                <button id="pause-button" title="Pause/Resume"><span class="pause-icon-bar"></span><span class="pause-icon-bar"></span></button>
+                <div id="pause-overlay" class="hidden">
+                    <div id="pause-menu-buttons">
+                        <span id="pause-message">PAUSED</span>
+                        <div class="pause-buttons-row">
+                            <button id="pause-home-button" class="overlay-button">Home</button>
+                            <button id="resume-button" class="overlay-button">Resume</button>
+                        </div>
+                    </div>
+                    <span id="countdown-display" class="hidden">3</span>
+                </div>
+                <div id="game-over-screen" class="hidden">
+                    <h2>Game Over!</h2>
+                    <p>Final Score: <span id="final-score">0</span></p>
+                    <p class="high-score-display">High Score: <span id="game-over-high-score">0</span></p>
+                    <div class="game-over-buttons">
+                        <button id="restart-button">Restart Run</button>
+                        <button id="change-char-button">Change Character</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="confirmation-dialog" class="hidden">
+                <div class="dialog-content">
+                    <p id="confirmation-message">Are you sure?</p>
+                    <div class="dialog-buttons">
+                        <button id="confirm-yes-button" class="dialog-button confirm">Yes</button>
+                        <button id="confirm-no-button" class="dialog-button cancel">No</button>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End scaler-wrapper -->
+    </div> <!-- End page-rotator -->
+    <!-- <script src="cordova.js"></script> -->
+    <script src="script.js"></script>
+</body>
+</html>

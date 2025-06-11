@@ -1,141 +1,130 @@
 // Wait for the DOM to be ready
 $(function () {
 
-    // Toggle class menu (CORRECT ORDER MAPPING)
+    // Toggle class menu
     $('.menu').on('click', function () {
         $(this).toggleClass('active');
         if ($(this).hasClass('active')) {
-            // Appliquer les classes de visibilité dans le BON ordre de page
-            $('.ss-menu1').addClass('visible1');          // Home (Position 1)
-            $('.ss-menu4').addClass('visible2');          // Music (Position 2)
-            $('.ss-menu-gallery').addClass('visible3');   // Gallery (Position 3)
-            $('.ss-menu2').addClass('visible4');          // Band (Position 4)
-            $('.ss-menu3').addClass('visible5');          // Concerts (Position 5)
-            $('.ss-menu5').addClass('visible6');          // Contact (Position 6)
+            // Apply visibility classes based on the desired on-screen order
+            // This order should match your screenshot/desired layout: Home, Music, Gallery, Band, Concerts, Game, Contact
+            $('.ss-menu1').addClass('visible1');          // Home (Appears 1st on screen)
+            $('.ss-menu4').addClass('visible2');          // Music (Appears 2nd on screen)
+            $('.ss-menu-gallery').addClass('visible3');   // Gallery (Appears 3rd on screen)
+            $('.ss-menu2').addClass('visible4');          // Band (Appears 4th on screen)
+            $('.ss-menu3').addClass('visible5');          // Concerts (Appears 5th on screen)
+            $('.ss-menu-game').addClass('visible6');      // Game (Appears 6th on screen)
+            $('.ss-menu-contact').addClass('visible7');   // Contact (Appears 7th on screen)
         } else {
-            // Enlever toutes les classes (l'ordre ici importe peu)
+            // Remove all visibility classes
             $('.ss-menu1').removeClass('visible1');
-            $('.ss-menu2').removeClass('visible4'); // <- Match removal with addition
-            $('.ss-menu3').removeClass('visible5'); // <- Match removal with addition
-            $('.ss-menu4').removeClass('visible2'); // <- Match removal with addition
-            $('.ss-menu-gallery').removeClass('visible3'); // <- Match removal with addition
-            $('.ss-menu5').removeClass('visible6');
+            $('.ss-menu4').removeClass('visible2');
+            $('.ss-menu-gallery').removeClass('visible3');
+            $('.ss-menu2').removeClass('visible4');
+            $('.ss-menu3').removeClass('visible5');
+            $('.ss-menu-game').removeClass('visible6');
+            $('.ss-menu-contact').removeClass('visible7');
         }
     });
 
-    // Close menu on item click (CORRECT ORDER MAPPING)
-    $('.ss-menu1, .ss-menu2, .ss-menu3, .ss-menu4, .ss-menu-gallery, .ss-menu5').on('click', function () {
-      $('.menu').removeClass('active');
-      // Enlever toutes les classes (l'ordre ici importe peu)
-      $('.ss-menu1').removeClass('visible1');
-      $('.ss-menu2').removeClass('visible4');
-      $('.ss-menu3').removeClass('visible5');
-      $('.ss-menu4').removeClass('visible2');
-      $('.ss-menu-gallery').removeClass('visible3');
-      $('.ss-menu5').removeClass('visible6');
+    // Close menu on item click - Target all menu item classes used above
+    // Ensure all these classes exist on your menu items in index.html
+    $('.ss-menu1, .ss-menu2, .ss-menu3, .ss-menu4, .ss-menu-gallery, .ss-menu-game, .ss-menu-contact').on('click', function () {
+      if ($('.menu').hasClass('active')) { // Only act if menu is active
+        $('.menu').removeClass('active');
+        // Remove all visibility classes
+        $('.ss-menu1').removeClass('visible1');
+        $('.ss-menu4').removeClass('visible2');
+        $('.ss-menu-gallery').removeClass('visible3');
+        $('.ss-menu2').removeClass('visible4');
+        $('.ss-menu3').removeClass('visible5');
+        $('.ss-menu-game').removeClass('visible6');
+        $('.ss-menu-contact').removeClass('visible7');
+      }
     });
 
-    // Close menu on scroll (CORRECT ORDER MAPPING)
+    // Close menu on scroll - Remove all visibility classes
     $(window).on('scroll', function () {
         if ($('.menu').hasClass('active')) {
           $('.menu').removeClass('active');
-           // Enlever toutes les classes (l'ordre ici importe peu)
+          // Remove all visibility classes
           $('.ss-menu1').removeClass('visible1');
-          $('.ss-menu2').removeClass('visible4');
-          $('.ss-menu3').removeClass('visible5');
           $('.ss-menu4').removeClass('visible2');
           $('.ss-menu-gallery').removeClass('visible3');
-          $('.ss-menu5').removeClass('visible6');
+          $('.ss-menu2').removeClass('visible4');
+          $('.ss-menu3').removeClass('visible5');
+          $('.ss-menu-game').removeClass('visible6');
+          $('.ss-menu-contact').removeClass('visible7');
         }
     });
 
     // Parallax effect (Rellax) Initialization
-    // Ensure Rellax library is loaded before this runs
-    // The check for 'mentions' path might be unnecessary if not applicable anymore
-    if (typeof Rellax !== 'undefined' && !window.location.pathname.match("mentions")) {
-        var rellax = new Rellax('.rellax');
+    if (typeof Rellax !== 'undefined') {
+        // Check if the element exists and not on 'mentions' page (if that logic is still needed)
+        if (document.querySelector('.rellax') && !window.location.pathname.match("mentions")) {
+            var rellax = new Rellax('.rellax');
+        }
     }
 
-    // --- CODE REMOVED ---
-    // - Script adresse Email removed
-    // - Contact form validation removed
-    // - Contact form AJAX submission removed
-    // - Newsletter form validation removed
-    // - Newsletter form AJAX submission removed
-    // --- END OF CODE REMOVED ---
-
-
-    // Animations on scroll (ScrollMagic/GSAP or IntersectionObserver based)
-    // This part remains as it animates general sections
-    $(window).on('scroll', function () {
+    // Animations on scroll
+    var scrollAnimationHandler = function() {
         let sizePage = $(window).height();
         let trigger = 100; // Offset for triggering animation
-        let elementY = document.getElementsByClassName('animatableY');
-        for (var unit of elementY) {
-          if (unit.getBoundingClientRect().top + trigger <= sizePage) {
-            unit.classList.add('showed');
-          }
+
+        function showElements(elements) {
+            for (var i = 0; i < elements.length; i++) {
+                var unit = elements[i];
+                // Check if element is not already shown to avoid redundant class addition
+                if (!unit.classList.contains('showed')) {
+                    if (unit.getBoundingClientRect().top + trigger <= sizePage) {
+                        unit.classList.add('showed');
+                    }
+                }
+            }
         }
-        let elementX = document.getElementsByClassName('animatableX');
-        for (var unit of elementX) {
-          if (unit.getBoundingClientRect().top + trigger <= sizePage) {
-            unit.classList.add('showed');
-          }
-        }
-        let elementOpacity = document.getElementsByClassName('animatableOpacity');
-        for (var unit of elementOpacity) {
-          if (unit.getBoundingClientRect().top + trigger <= sizePage) {
-            unit.classList.add('showed');
-          }
-        }
-    });
+        showElements(document.getElementsByClassName('animatableY'));
+        showElements(document.getElementsByClassName('animatableX'));
+        showElements(document.getElementsByClassName('animatableOpacity'));
+    };
+    // Attach the handler to the scroll event
+    $(window).on('scroll', scrollAnimationHandler);
+    // Run the handler once on page load to check elements already in view
+    scrollAnimationHandler();
 
 
-    // Lazyload Initialization
-    // Ensure LazyLoad library is loaded before this runs
-    // The check for 'mentions' path might be unnecessary if not applicable anymore
-    if (typeof LazyLoad !== 'undefined' && !window.location.pathname.match("mentions")) {
-        // Assuming global lazyload() function call based on original code comment
-        // Or initialize using the instance method if that's how the library works:
-        // var lazyLoadInstance = new LazyLoad({});
-        // Check your LazyLoad library's documentation if unsure.
-        // Using the function call as implied by original comments:
-        lazyload();
+    // Lazyload Initialization - USING THE WORKING lazyload() global function call
+    if (typeof lazyload === 'function' && !window.location.pathname.match("mentions")) { // Check if lazyload is a function
+        lazyload(); // Global function call as per your working version
+    } else if (typeof LazyLoad !== 'undefined' && !window.location.pathname.match("mentions")) {
+        // Fallback or alternative if lazyload() isn't defined but LazyLoad constructor is
+        // This indicates a different version of the library might be loaded than expected
+        console.warn("lazyload() function not found, trying new LazyLoad({}). Check library version.");
+        var lazyLoadInstance = new LazyLoad({}); // This was not working for you with 2.0.0-rc.2
     }
 
-
-    // Reload on resize (Original code was commented out, kept as is)
-    /*
-    let initialWidth = $(window).innerWidth();
-    $(window).on('resize', function () { ... });
-    */
 
     // Manage scroll up button
     let scrollUpHandler = function() {
         let scrollNow = $(window).scrollTop();
         if (scrollNow > 600) {
-            // Use fadeIn() for smoother appearance if desired
-            if ($('#upArrow').is(":hidden")) {
-                 $('#upArrow').fadeIn(); // Changed to fadeIn
+            if ($('#upArrow').is(":hidden")) { // Check if hidden before fading in
+                 $('#upArrow').fadeIn();
             }
         } else {
-            // Use fadeOut() for smoother disappearance if desired
-            $('#upArrow').fadeOut(); // Changed to fadeOut
+            // Check if visible before fading out to prevent queue buildup if already hidden
+            if ($('#upArrow').is(":visible")) {
+                 $('#upArrow').fadeOut();
+            }
         }
     };
     // Attach the handler to the scroll event
     $(window).on('scroll', scrollUpHandler);
     // Run the handler once on page load to set initial state
     scrollUpHandler();
+
     // Handle click event for the arrow
     $('#upArrow').on('click', function () {
         $('html, body').animate({scrollTop: 0}, 500); // Smooth scroll animation
     });
-
-    // Card click listener was REMOVED in the original, so nothing to add/remove here.
-
-    // Location socials (COMMENTED OUT in original, kept as is)
-    /* ... */
 
 // End of Document Ready
 });

@@ -9,11 +9,18 @@
   --text-medium: #9fa0ac; /* Gris moyen */
   --bg-dark: #1A1B1D; /* Fond sombre */
   --font-primary: "Lato", sans-serif;
+  --font-pixel: "Press Start 2P", cursive; /* Pixel font variable */
   --transition-fast: all ease-in-out 100ms;
   --transition-medium: all ease-in-out 250ms;
   --transition-slow: all ease-in-out 1s;
   --bezier-curve: cubic-bezier(0, 0.69, 0.46, 0.95);
   --gallery-aspect-ratio: 4 / 3; /* Ratio pour la galerie (ex: 4/3, 16/9, 1/1) */
+
+  /* Shades for Green Pixel Button */
+  --pixel-button-green-border: #8FB339; /* Darker shade of kiwi green for border/shadow */
+  --pixel-button-green-shine: #DAF293; /* Lighter shade of kiwi green for shine */
+  --pixel-button-green-hover: #a8d03f; /* Slightly more saturated/darker green on hover */
+  --pixel-button-green-active: #9cc130;/* Even more saturated/darker green on active */
 }
 
 html {
@@ -85,17 +92,18 @@ section {
 /* ============================================= */
 
 .mainView {
-  position: relative; /* DOIT être relative pour positionner enfants absolus */
+  position: relative;
   min-height: 100vh;
-  width: 100%; /* Force la largeur complète */
+  width: 100%;
   color: var(--text-medium);
-  /* Default background for desktop */
   background: url("../img/bcc-free-template-rock-hard.jpg") center center / cover no-repeat;
-  background-color: var(--bg-dark); /* Fallback color */
-  overflow: hidden; /* Important pour Rellax et position absolue */
+  background-color: var(--bg-dark);
+  overflow: hidden;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .shareBtn {
@@ -104,7 +112,7 @@ section {
   left: 5%;
   display: flex;
   gap: 5px;
-  z-index: 10; /* Au dessus du logo/rellax */
+  z-index: 10;
 }
 
 .elementBtn {
@@ -176,7 +184,7 @@ section {
   transition: background-color var(--transition-fast), opacity 250ms ease-in-out, transform 250ms ease-in-out;
   opacity: 0;
   z-index: 1000;
-  transform: translateY(0);
+  transform: translateY(0) translateX(100px);
 }
 
 .ss-menu img {
@@ -198,36 +206,28 @@ section {
 .menu.active .line2 { opacity: 0; }
 .menu.active .line3 { top: 50%; transform: translateY(-50%) scaleX(1) rotate(-45deg); transition-delay: 0ms; }
 
-/* --- Apparition des sous-menus (Ordre Corrigé) --- */
-.ss-menu.visible1 { opacity: 1; transform: translateY(75px);  transition-delay: 25ms; } /* Home */
-.ss-menu.visible2 { opacity: 1; transform: translateY(150px); transition-delay: 50ms; } /* Music */
-.ss-menu.visible3 { opacity: 1; transform: translateY(225px); transition-delay: 75ms; } /* Gallery */
-.ss-menu.visible4 { opacity: 1; transform: translateY(300px); transition-delay: 100ms;} /* Band */
-.ss-menu.visible5 { opacity: 1; transform: translateY(375px); transition-delay: 125ms;} /* Concerts */
-.ss-menu.visible6 { opacity: 1; transform: translateY(450px); transition-delay: 150ms;} /* Contact */
-
+/* --- Apparition des sous-menus (Updated for 7 items) --- */
+/* HTML Order in JS mapping: Home, Music, Gallery, Band, Concerts, Game, Contact */
+.ss-menu.visible1 { opacity: 1; transform: translateY(75px) translateX(0);  transition-delay: 25ms; }  /* Home */
+.ss-menu.visible2 { opacity: 1; transform: translateY(150px) translateX(0); transition-delay: 50ms; } /* Music */
+.ss-menu.visible3 { opacity: 1; transform: translateY(225px) translateX(0); transition-delay: 75ms; } /* Gallery */
+.ss-menu.visible4 { opacity: 1; transform: translateY(300px) translateX(0); transition-delay: 100ms;} /* Band */
+.ss-menu.visible5 { opacity: 1; transform: translateY(375px) translateX(0); transition-delay: 125ms;} /* Concerts */
+.ss-menu.visible6 { opacity: 1; transform: translateY(450px) translateX(0); transition-delay: 150ms;} /* Game */
+.ss-menu.visible7 { opacity: 1; transform: translateY(525px) translateX(0); transition-delay: 175ms;} /* Contact */
 
 /* --- Structure pour Rellax + Centrage Logo --- */
-
-/* Conteneur extérieur pour appliquer Rellax */
 .rellax-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   z-index: 1;
   pointer-events: none;
 }
 
-/* Conteneur intérieur pour le logo et son centrage */
 .main-logo-container {
-  position: absolute;
+  position: relative;
   width: 70%;
   max-width: 650px;
-  left: 50%;
-  top: 70%;
-  transform: translate(-50%, -50%);
+  margin: 0 auto;
+  padding-top: calc(100vh * 0.40);
   opacity: 0;
   animation: opacity 2s cubic-bezier(0.17, 0.67, 0.14, 0.97) 1s both;
   z-index: 1;
@@ -242,6 +242,43 @@ section {
   margin: 0 auto;
 }
 
+/* --- Hero Shortcuts Styles --- */
+.hero-shortcuts {
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 50px;
+  padding-bottom: 20px;
+  position: relative;
+  z-index: 5;
+  width: 100%;
+}
+
+.hero-shortcuts a {
+  font-family: var(--font-primary);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-light);
+  text-decoration: none;
+  padding: 8px 15px;
+  transition: color 0.3s ease;
+  text-transform: uppercase;
+  display: inline-block;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* Drop shadow for readability */
+}
+
+.hero-shortcuts a:hover {
+  color: var(--primary-color);
+}
+
+.shortcut-separator {
+  color: var(--text-light);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 5px;
+  opacity: 0.7;
+  display: inline-block;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* Drop shadow for readability */
+}
 
 /* ============================================= */
 /* === MAIN CONTENT SECTIONS ================= */
@@ -259,6 +296,109 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
 .imgContent .card img { display: block; width: 100%; max-width: 250px; height: auto; border-radius: 15px; }
 .imgContent .card p { text-align: center; margin: 0; padding: 0; line-height: 1.3; }
 .imgContent .card p:first-of-type { font-size: 1.3rem; color: var(--text-light); font-weight: 700; }
+
+/* --- Game Promo Area Styles (CSS Pixel Button) --- */
+.game-promo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  padding: 50px 20px;
+  flex-wrap: wrap;
+  /* Optional: if you want to constrain the width of this block and center it */
+  /* max-width: 800px; */
+  /* margin-left: auto; */
+  /* margin-right: auto; */
+}
+
+.game-promo-text {
+  font-family: var(--font-pixel);
+  font-size: 26px;
+  color: var(--text-light);
+  line-height: 1.4;
+  text-align: center;
+  position: relative;     /* For pseudo-elements */
+  padding-top: 40px;    /* Space for top line */
+  padding-bottom: 40px; /* Space for bottom line */
+  * flex-grow: 1; */ /* Uncomment if you want text to take more space */
+}
+
+/* Line above the game promo text */
+.game-promo-text::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 65%;
+  transform: translateX(-50%);
+  width: 550px;
+  max-width: 80%;
+  height: 3px;
+  background-color: var(--primary-color);
+}
+
+/* Line below the game promo text */
+.game-promo-text::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 65%;
+  transform: translateX(-50%);
+  width: 550px;
+  max-width: 80%;
+  height: 3px;
+  background-color: var(--primary-color);
+}
+
+.pixel-css-play-button {
+  font-family: var(--font-pixel);
+  font-size: 28px;
+  color: var(--bg-dark); /* Dark text */
+  background-color: var(--primary-color); /* Kiwi green */
+  text-decoration: none;
+  padding: 12px 35px;
+  display: inline-block;
+  border: 4px solid var(--pixel-button-green-border); /* Darker green border */
+  position: relative;
+  box-shadow: 4px 4px 0px var(--pixel-button-green-border); /* Darker green shadow */
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+  cursor: pointer;
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;
+  text-align: center;
+}
+
+.pixel-css-play-button::before { /* This is for the shine line on the button itself */
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  height: 6px; /* Thickness of shine */
+  background-color: var(--pixel-button-green-shine); /* Lighter green shine */
+  opacity: 0.9;
+  z-index: 1;
+}
+
+.pixel-css-play-button span { /* Wrap text in span if needed for z-index */
+  position: relative;
+  z-index: 2; /* To ensure text is above the button's ::before shine */
+}
+
+.pixel-css-play-button:hover {
+  background-color: var(--pixel-button-green-hover);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--pixel-button-green-border);
+}
+
+.pixel-css-play-button:active {
+  background-color: var(--pixel-button-green-active);
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px var(--pixel-button-green-border);
+}
+.pixel-css-play-button:active::before { /* Dim shine on active for the button */
+    opacity: 0.6;
+}
+
 
 /* --- Section Musique (2 Vidéos) --- */
 .videos-container {
@@ -294,7 +434,6 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
   border-radius: 5px;
 }
 
-
 /* --- Section Galerie (Ratio fixe, Hover sur lien) --- */
 .galleryContent {
   display: grid;
@@ -326,7 +465,6 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
   border-radius: 5px;
   object-fit: cover;
 }
-
 
 /* --- Section Concerts (Style Cartes, Texte Agrandis, Sans Bouton) --- */
 .styled-dates .concert-list {
@@ -406,7 +544,6 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
   transform: none;
 }
 
-
 /* --- Lien "pink" --- */
 p.pink, a.pink {
   color: var(--primary-color);
@@ -420,7 +557,6 @@ p.pink, a.pink {
 p.pink:hover, a.pink:hover {
   transform: translateX(5px);
 }
-
 
 /* --- Section Musique Specific Container Styles --- */
 .music-links-container {
@@ -470,7 +606,6 @@ img.platform-icon {
   height: 24px;
   display: inline-block;
   vertical-align: middle;
-  /* fill: currentColor; /* May be needed for SVGs */
 }
 
 a.music-link:hover {
@@ -480,20 +615,11 @@ a.music-link:hover {
   box-shadow: 0 4px 12px rgba(189, 230, 76, 0.4);
 }
 
-
-/* ============================================= */
-/* === FORMS (Removed - Simplified Contact) == */
-/* ============================================= */
-
 /* --- Section Contact (Simplified) --- */
 .contact {
   text-align: center;
   padding-top: 50px;
   padding-bottom: 80px;
-}
-
-.contact h2 {
-    /* Styles for the H2 are inherited or can be added here */
 }
 
 .contact .separator {
@@ -561,13 +687,6 @@ a.music-link:hover {
   margin-bottom: 2em;
 }
 
-.contact .animatableY,
-.contact .animatableX,
-.contact .animatableOpacity {
-    /* Animation properties are defined elsewhere */
-}
-
-
 /* ============================================= */
 /* === FOOTER ================================ */
 /* ============================================= */
@@ -604,8 +723,6 @@ footer .footerBaner .bandBanner {
   height: auto;
   cursor: default;
 }
-
-/* --- Social Banner REMOVED --- */
 
 footer p a {
   color: var(--bg-dark);
@@ -644,7 +761,33 @@ footer p a:hover {
   .hardLight { width: 85%; }
   .imgContent { width: 90%; }
   .galleryContent { grid-template-columns: repeat(2, 1fr); }
-  .main-logo-container { max-width: 550px; }
+  .main-logo-container { max-width: 550px; padding-top: calc(100vh * 0.35); }
+
+  .hero-shortcuts a {
+    font-size: 16px;
+    padding: 5px 10px;
+  }
+  .shortcut-separator {
+    font-size: 16px;
+  }
+  .game-promo-text {
+    font-size: 22px;
+  }
+  .game-promo-text::before,
+  .game-promo-text::after {
+    width: 220px;
+    max-width: 70%;
+  }
+  .pixel-css-play-button {
+    font-size: 24px;
+    padding: 10px 30px;
+  }
+   .pixel-css-play-button::before {
+    height: 5px;
+    top: 3px;
+    left: 3px;
+    right: 3px;
+  }
 }
 
 /* --- Mobile Large --- */
@@ -654,16 +797,42 @@ footer p a:hover {
   .shareBtn { display: none; }
   .hardLight { width: 95%; }
   .imgContent { width: 100%; }
-  .main-logo-container { width: 80%; top: 70%; max-width: 400px; } /* Adjusted top slightly, check visual */
+  .main-logo-container { width: 80%; max-width: 400px; padding-top: calc(100vh * 0.30); }
 
-  /* Adjust hero background for mobile */
   .mainView {
-    /* background-image: url(...); /* Keep original image */
-    background-size: 180% auto; /* Scale width to 100%, height auto */
-    background-position: center center; /* Center the scaled image */
+    background-size: 180% auto;
+    background-position: center center;
     background-repeat: no-repeat;
-    /* Optionally adjust min-height if needed */
-    /* min-height: 90vh; */
+  }
+
+  .hero-shortcuts {
+    margin-top: 20px;
+  }
+  .hero-shortcuts a {
+    padding: 8px 10px;
+    font-size: 15px;
+    display: block;
+    margin-bottom: 5px;
+  }
+  .shortcut-separator {
+    display: none;
+  }
+
+  .game-promo-container {
+    flex-direction: column;
+    gap: 25px;
+  }
+  .game-promo-text {
+    font-size: 22px;
+    text-align: center;
+    order: 1;
+    padding-top: 25px; /* Adjust padding when stacked */
+    padding-bottom: 25px;
+  }
+  .pixel-css-play-button {
+    font-size: 24px;
+    padding: 12px 25px;
+    order: 2;
   }
 
   .videos-container { flex-direction: column; align-items: center; gap: 40px; }
@@ -693,25 +862,43 @@ footer p a:hover {
 
 /* --- Mobile Petit --- */
 @media screen and (max-width: 480px) {
-  .main-logo-container { width: 85%; top: 65%; max-width: 300px; } /* Adjusted top more, check visual */
+  .main-logo-container { width: 85%; max-width: 300px; padding-top: calc(100vh * 0.25); }
   .hardLight { font-size: 1.3rem; }
   .styled-dates .concert-venue { font-size: 1.2rem; }
   .styled-dates .concert-city { font-size: 0.9rem; }
 
-  /* Adjust hero background for small mobile */
   .mainView {
-     /* Same adjustment as mobile large, could refine further if needed */
      background-size: 180% auto;
      background-position: center center;
      background-repeat: no-repeat;
-     /* Optionally adjust min-height */
-     /* min-height: 85vh; */
   }
 
-  /* Global button adjustments for small mobile */
+  .hero-shortcuts a {
+    font-size: 16px;
+  }
+  .game-promo-text {
+    font-size: 18px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  .game-promo-text::before,
+  .game-promo-text::after {
+    width: 100px;
+    max-width: 40%;
+  }
+  .pixel-css-play-button {
+    font-size: 20px;
+    padding: 8px 25px;
+  }
+   .pixel-css-play-button::before {
+    height: 4px;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+  }
+
   a.music-link { padding: 10px 20px; font-size: 1rem; }
   img.platform-icon { width: 20px; height: 20px; }
-  /* Container gap adjustments */
   .music-links-container ul { gap: 15px; }
   .contact .contact-socials { gap: 15px; }
 
