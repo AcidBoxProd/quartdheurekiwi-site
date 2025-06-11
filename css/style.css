@@ -300,15 +300,14 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
 /* --- Game Promo Area Styles (CSS Pixel Button) --- */
 .game-promo-container {
   display: flex;
-  justify-content: center;
+  justify-content: center; /* Centers flex items (text block & button) within this container */
   align-items: center;
   gap: 25px;
-  padding: 50px 20px;
+  padding: 50px 20px; /* Padding around the content */
   flex-wrap: wrap;
-  /* Optional: if you want to constrain the width of this block and center it */
-  /* max-width: 800px; */
-  /* margin-left: auto; */
-  /* margin-right: auto; */
+  max-width: 800px;   /* Constrain the width of this promo block */
+  margin-left: auto;  /* Center the promo block on the page */
+  margin-right: auto; /* Center the promo block on the page */
 }
 
 .game-promo-text {
@@ -316,11 +315,11 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
   font-size: 26px;
   color: var(--text-light);
   line-height: 1.4;
-  text-align: center;
+  text-align: center; /* Center the text within its own block */
   position: relative;     /* For pseudo-elements */
   padding-top: 40px;    /* Space for top line */
   padding-bottom: 40px; /* Space for bottom line */
-  * flex-grow: 1; */ /* Uncomment if you want text to take more space */
+  /* flex-grow: 1; */ /* Commented out to let items size naturally and center with justify-content */
 }
 
 /* Line above the game promo text */
@@ -328,10 +327,10 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
   content: '';
   position: absolute;
   top: 0;
-  left: 65%;
+  left: 50%; /* Center the line relative to game-promo-text */
   transform: translateX(-50%);
-  width: 550px;
-  max-width: 80%;
+  width: 250px; /* Adjust length of line as desired */
+  max-width: 80%; /* Max length relative to the text block */
   height: 3px;
   background-color: var(--primary-color);
 }
@@ -341,10 +340,10 @@ p.miniPara { color: var(--text-light); line-height: 30px; margin: 0; }
   content: '';
   position: absolute;
   bottom: 0;
-  left: 65%;
+  left: 50%; /* Center the line relative to game-promo-text */
   transform: translateX(-50%);
-  width: 550px;
-  max-width: 80%;
+  width: 250px; /* Adjust length of line as desired */
+  max-width: 80%; /* Max length relative to the text block */
   height: 3px;
   background-color: var(--primary-color);
 }
@@ -775,7 +774,7 @@ footer p a:hover {
   }
   .game-promo-text::before,
   .game-promo-text::after {
-    width: 220px;
+    width: 200px;
     max-width: 70%;
   }
   .pixel-css-play-button {
@@ -883,8 +882,8 @@ footer p a:hover {
   }
   .game-promo-text::before,
   .game-promo-text::after {
-    width: 100px;
-    max-width: 40%;
+    width: 150px; /* Adjusted from previous 100px to match increase */
+    max-width: 60%; /* Adjusted from previous 40% to match increase */
   }
   .pixel-css-play-button {
     font-size: 20px;
