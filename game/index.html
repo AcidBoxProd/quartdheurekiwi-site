@@ -42,15 +42,14 @@
     </div>
 </div>
 
-    <!-- --- AUDIO ELEMENTS OVERHAUL --- -->
-    <!-- Changed most preload="auto" to "metadata" or "none" to prevent network clogging on mobile -->
+    <!-- --- AUDIO ELEMENTS --- -->
     <div id="audio-container" style="display: none;">
-        <!-- Music: Metadata allows knowing duration without downloading the whole file immediately -->
-        <audio id="background-music" loop preload="metadata"><source src="audio/quart-dheure-kiwi-theme.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
-        <audio id="invincibility-music" loop preload="metadata"><source src="audio/invincibility-music.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
-        <audio id="menu-music" loop preload="metadata"><source src="audio/menu-theme.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
+        <!-- Music: Set to AUTO so they fully buffer before the game starts. Prevents stuttering. -->
+        <audio id="background-music" loop preload="auto"><source src="audio/quart-dheure-kiwi-theme.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
+        <audio id="invincibility-music" loop preload="auto"><source src="audio/invincibility-music.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
+        <audio id="menu-music" loop preload="auto"><source src="audio/menu-theme.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
         
-        <!-- SFX: Preload "none". JS should load these before the gameplay starts. -->
+        <!-- SFX: Preload "none" to save bandwidth. JS will handle them. -->
         <audio id="sfx-jump" preload="none"><source src="audio/jump-sfx.mp3" type="audio/mpeg"></audio>
         <audio id="sfx-beer" preload="none"><source src="audio/beer-collect-sfx.mp3" type="audio/mpeg"></audio>
         <audio id="sfx-kiwi" preload="none"><source src="audio/kiwi-collect-sfx.mp3" type="audio/mpeg"></audio>
@@ -61,12 +60,10 @@
         <audio id="sfx-slide" preload="none"><source src="audio/slide-sfx.mp3" type="audio/mpeg"></audio>
         <audio id="sfx-coin" preload="none"><source src="audio/coin.mp3" type="audio/mpeg"></audio>
         
-        <!-- Footsteps need to be ready fast, metadata is okay -->
         <audio id="sfx-footstep-1" preload="metadata"><source src="audio/footstep-sfx-1.mp3" type="audio/mpeg"></audio>
         <audio id="sfx-footstep-2" preload="metadata"><source src="audio/footstep-sfx-2.mp3" type="audio/mpeg"></audio>
         <audio id="sfx-footstep-3" preload="metadata"><source src="audio/footstep-sfx-3.mp3" type="audio/mpeg"></audio>
         <audio id="sfx-footstep-4" preload="metadata"><source src="audio/footstep-sfx-4.mp3" type="audio/mpeg"></audio>
-        <!-- UI Clicks might be needed early, metadata is okay -->
         <audio id="sfx-button-click" preload="metadata"><source src="audio/button-click-sfx.mp3" type="audio/mpeg"></audio>
         <audio id="sfx-char-select-confirm" preload="metadata"><source src="audio/char-select-confirm-sfx.mp3" type="audio/mpeg"></audio>
     </div>

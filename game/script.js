@@ -75,11 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const allScreens = [homeScreen, characterSelectionScreen, gameContainer, settingsMenuScreen];
 
-    // --- NEW FRAME RATE LOCK VARIABLES ---
+    // --- OPTIMIZATION: LOGICAL COORDINATES ---
+    // Using JS variables instead of querying the DOM stops lag spikes
+    let playerLogicalBottom = 40; 
+    let playerLogicalLeft = -120;
+    
+    // --- FRAME RATE LOCK VARIABLES ---
     const TARGET_FPS = 60;
-    const TIME_STEP = 1000 / TARGET_FPS; // ~16.66ms per physics frame
+    const TIME_STEP = 1000 / TARGET_FPS; 
     let timeAccumulator = 0;
-    // -------------------------------------
 
     let score = 0, gameSpeed = 5, originalGameSpeed = 5, scoreMultiplier = 1, playerLives = 3;
     let gameOver = true, selectedCharacterClass = 'char1', currentPlayerState = 'idle', playerDY = 0;
@@ -139,11 +143,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const JUMP_DOWN_THRESHOLD_CONST = 0, JUMP_HOLD_BOOST_CONST = 0.5, BOOST_VERTICAL_SPEED_CONST = 5, BOOST_SMOOTH_FACTOR_CONST = 0.1;
     const BOOST_MIN_BOTTOM_CONST = 50, BOOST_MAX_BOTTOM_CONST = 275, HITBOX_HORIZONTAL_PADDING_CONST = 40, HITBOX_VERTICAL_PADDING_CONST = 20;
     const BASE_OBSTACLE_INTERVAL_MS_CONST = 2000, MIN_OBSTACLE_INTERVAL_SECONDS_CONST = 0.9, OBSTACLE_SPAWN_SPEED_SENSITIVITY_CONST = 0.75;
-    const PARTICLE_SPAWN_INTERVAL_CONST = 0.05, BOOST_PARTICLE_SPAWN_SPREAD_X_CONST = 50, BOOST_PARTICLE_SPAWN_SPREAD_Y_CONST = 80;
+    // Adjusted particle spawn slightly to reduce GC lag spikes
+    const PARTICLE_SPAWN_INTERVAL_CONST = 0.1, BOOST_PARTICLE_SPAWN_SPREAD_X_CONST = 50, BOOST_PARTICLE_SPAWN_SPREAD_Y_CONST = 80;
     const BOOST_PARTICLE_TRAVEL_DISTANCE_X_CONST = 50, BOOST_PARTICLE_TRAVEL_DISTANCE_Y_CONST = 30;
     const BOOST_PARTICLE_MIN_DURATION_CONST = 500, BOOST_PARTICLE_MAX_DURATION_CONST = 1000, SCORE_INCREMENT_PER_SECOND_CONST = 10;
     const POINTS_PER_BEER_CONST = 50, VERTICAL_SPAWN_OFFSET_CONST = -10, THROWN_BOTTLE_WIDTH_CONST = 60, THROWN_BOTTLE_HEIGHT_CONST = 60;
-    const THROWN_BOTTLE_SPEED_X_FACTOR_CONST = 1.5, BASE_BOTTLE_INTERVAL_MS_CONST = 4000, MIN_BOTTLE_INTERVAL_SECONDS_CONST = 2.5;
+    const THROWN_BOTTLE_SPEED_X_FACTOR_CONST = 1.2, BASE_BOTTLE_INTERVAL_MS_CONST = 4000, MIN_BOTTLE_INTERVAL_SECONDS_CONST = 2.5;
     const BOTTLE_SPAWN_CHANCE_CONST = 0.35, BOTTLE_VERTICAL_MARGIN_CONST = 10, BOTTLE_SPAWN_SENSITIVITY_CONST = 0.7;
     const MUSIC_ON_KEY_CONST = 'htmlRunnerMusicOn', SFX_ON_KEY_CONST = 'htmlRunnerSfxOn';
     const PLAYER_ANIM_START_X_CONST = -120, PLAYER_ANIM_TARGET_X_CONST = playerLeftPosition_CONST, PLAYER_ANIM_START_Y_OFFSET_CONST = 150;
@@ -186,18 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const coreUiImagesToPreload_FN = [ 'img/home-screen-1920x1080.png', 'img/menu-screen-1.png', 'img/menu-screen-2.png', 'img/menu-screen-3.png', 'img/menu-screen-4.png', 'img/wall-texture-solid.png', 'img/wall-texture-hole.png' ].filter(url => url);
 
 
-    const allGameAndCharacterAssets = [
-        ...essentialImagesForGame_CONST,
-        ...Object.values(spritePaths_CONST.char1),
-        ...Object.values(spritePaths_CONST.char2),
-        ...Object.values(spritePaths_CONST.char3),
-        ...Object.values(spritePaths_CONST.char4),
-        ...obstacleImages_CONST.short,
-        ...obstacleImages_CONST.tall,
-        ...obstacleImages_CONST.high
-    ].filter(url => url);
-
-
     const getRandomElement_FN = (arr) => { if (!Array.isArray(arr) || arr.length === 0) { return null; } return arr[Math.floor(Math.random() * arr.length)]; };
     function getHighScore_FN() { const storedScore = localStorage.getItem(HIGH_SCORE_KEY_CONST); return storedScore ? parseInt(storedScore, 10) : 0; }
     function preloadImages_FN(urls, callback) {
@@ -206,8 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
         urls.forEach((url) => {
             if (!url) { loadedCount++; if (loadedCount === totalImages && callback) { callback(); } return; }
             const img = new Image();
-            img.onload = () => { loadedCount++; if (loadedCount === totalImages && callback) { console.log("All images preloaded successfully."); callback(); } };
-            img.onerror = (e) => { console.error(`Preloading: FAILED to load image: ${url}`, e); loadedCount++; if (loadedCount === totalImages && callback) { console.log("Preloading complete (with errors)."); callback(); } };
+            img.onload = () => { loadedCount++; if (loadedCount === totalImages && callback) { callback(); } };
+            img.onerror = (e) => { console.warn(`Preload failed: ${url}`); loadedCount++; if (loadedCount === totalImages && callback) { callback(); } };
             img.src = url;
         });
     }
@@ -225,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeMusicTrack.paused) {
             if (activeMusicTrack.currentTime <= 0 || activeMusicTrack.ended) activeMusicTrack.currentTime = 0;
             activeMusicTrack.volume = musicVolume;
-            activeMusicTrack.play().catch(error => console.warn(`Music play/resume failed for ${activeMusicTrack.id}:`, error));
+            activeMusicTrack.play().catch(error => console.warn(`Music play/resume failed...`, error));
         }
     }
     function pauseActiveMusic_FN() { if (activeMusicTrack && !activeMusicTrack.paused) activeMusicTrack.pause(); }
@@ -236,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (menuMusic) { menuMusic.pause(); menuMusic.currentTime = 0; }
     }
 
-    function playSoundEffect_FN(sfxElement, loop = false, volumeMultiplier = 1.0) { if (sfxElement && isSfxOn) { let finalVolume = sfxVolume * volumeMultiplier; finalVolume = Math.max(0, Math.min(1.0, finalVolume)); sfxElement.volume = finalVolume; if (sfxElement.paused || !loop) sfxElement.currentTime = 0; sfxElement.loop = loop; sfxElement.play().catch(error => console.warn("SFX play failed:", sfxElement.id, error, sfxElement.src)); } }
+    function playSoundEffect_FN(sfxElement, loop = false, volumeMultiplier = 1.0) { if (sfxElement && isSfxOn) { let finalVolume = sfxVolume * volumeMultiplier; finalVolume = Math.max(0, Math.min(1.0, finalVolume)); sfxElement.volume = finalVolume; if (sfxElement.paused || !loop) sfxElement.currentTime = 0; sfxElement.loop = loop; sfxElement.play().catch(error => console.warn("SFX play failed...", error)); } }
     function stopSoundEffect_FN(sfxElement) { if (sfxElement && !sfxElement.paused) { sfxElement.pause(); sfxElement.currentTime = 0; sfxElement.loop = false; } }
     function showConfirmationDialog_FN(message, onConfirm) { if (confirmationDialog && confirmationMessage) { confirmationMessage.textContent = message; confirmAction = onConfirm; confirmationDialog.classList.remove('hidden'); } }
     function hideConfirmationDialog_FN() { if (confirmationDialog) { confirmationDialog.classList.add('hidden'); confirmAction = null; } }
@@ -306,12 +299,10 @@ document.addEventListener('DOMContentLoaded', () => {
     ].filter(url => url);
 
     function initializeApp() {
-        console.log("initializeApp CALLED");
         const splashStartButton = document.getElementById('splash-start-button');
 
         if (!splashScreen || !pageRotator || !scalerWrapper || !rotatePrompt || !splashStartButton) {
-            console.error("CRITICAL ERROR: Essential layout elements missing.");
-            document.body.innerHTML = "<p style='color:white; text-align:center; padding-top: 50px; font-size: 20px;'>Error: Game files are corrupted or missing. Please reinstall.</p>";
+            document.body.innerHTML = "<p style='color:white; text-align:center; padding-top: 50px;'>Error: Game files corrupted. Please refresh.</p>";
             return;
         }
 
@@ -321,9 +312,11 @@ document.addEventListener('DOMContentLoaded', () => {
         function handleSplashInteraction() {
             splashStartButton.removeEventListener('click', handleSplashInteraction);
             
-            // Force load core audio files now that user has interacted
-            [sfxJump, sfxBeer, sfxKiwi, sfxHit, sfxBoost, sfxSlide, sfxCoin].forEach(sfx => {
-                if (sfx) sfx.load();
+            // --- FIX AUDIO BUFFERING ---
+            // Force browser to load all audio elements immediately to stop stuttering
+            const allAudioElements = document.querySelectorAll('audio');
+            allAudioElements.forEach(audio => {
+                audio.load();
             });
 
             if (splashScreen) splashScreen.classList.add('hidden');
@@ -457,16 +450,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleKeyDown_FN(e) { if (isPaused || isCountingDown || (gameOverScreen && !gameOverScreen.classList.contains('hidden')) || gameOver || isInStartingAnimation) return; if (isBoosting) { if (touchActionIdentifier === null) { if (e.code === 'ArrowUp' || e.key === 'ArrowUp') { e.preventDefault(); boostVelocityY = BOOST_VERTICAL_SPEED_CONST; } else if (e.code === 'ArrowDown' || e.key === 'ArrowDown') { e.preventDefault(); boostVelocityY = -BOOST_VERTICAL_SPEED_CONST; } } } else { if (e.code === 'Escape' || e.code === 'KeyP') { playSoundEffect_FN(sfxButtonClick); togglePause_FN(); return; } if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.key === 'Shift') && powerGaugeValue >= POWER_GAUGE_MAX_CONST) { e.preventDefault(); activateBoost_FN(); return; } if ((e.code === 'Space' || e.code === 'ArrowUp' || e.key === ' ' || e.key === 'ArrowUp')) { e.preventDefault(); if (!isJumping && !isSliding && !isBoosting) jump_FN(); if (!isSliding && !isBoosting) isHoldingJump = true; } else if ((e.code === 'ArrowDown' || e.key === 'ArrowDown')) { e.preventDefault(); if (!isSliding && !isBoosting) { if (isJumping) slamDown_FN(); else startSlide_FN(); } } } }
     function handleKeyUp_FN(e) { if (isPaused || isCountingDown || gameOver || isInStartingAnimation) return; if (isBoosting) { if (((e.code === 'ArrowUp' || e.key === 'ArrowUp') && boostVelocityY > 0) || ((e.code === 'ArrowDown' || e.key === 'ArrowDown') && boostVelocityY < 0)) boostVelocityY = 0; } else { if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === ' ' || e.key === 'ArrowUp') isHoldingJump = false; else if (e.code === 'ArrowDown' || e.key === 'ArrowDown') { if (isSliding || currentPlayerState === 'crouching') stopSlide_FN(); } } }
-    function handleTouchStart_FN(e) { if (isPaused || isCountingDown || isInStartingAnimation) return; e.preventDefault(); if (gameOver && gameOverScreen && gameOverScreen.classList.contains('hidden')) return; if (touchActionIdentifier !== null) return; const touch = e.changedTouches[0]; touchActionIdentifier = touch.identifier; touchStartY = touch.clientY; touchStartTime = Date.now(); isTouchSliding = false; if (isBoosting) { playerBoostStartY = parseFloat(player.style.bottom); boostTargetY = playerBoostStartY; boostVelocityY = 0; } else { const gaugeRect = powerGaugeContainer.getBoundingClientRect(); if (powerGaugeValue >= POWER_GAUGE_MAX_CONST && touch.clientX >= gaugeRect.left && touch.clientX <= gaugeRect.right && touch.clientY >= gaugeRect.top && touch.clientY <= gaugeRect.bottom) { activateBoost_FN(); touchActionIdentifier = null; return; } if (gameOverScreen && !gameOverScreen.classList.contains('hidden')) { const rR = restartButton.getBoundingClientRect(), cCR = changeCharButton.getBoundingClientRect(); if (touch.clientX >= rR.left && touch.clientX <= rR.right && touch.clientY >= rR.top && touch.clientY <= rR.bottom) { playSoundEffect_FN(sfxButtonClick); restartButton.click(); } else if (touch.clientX >= cCR.left && touch.clientX <= cCR.right && touch.clientY >= cCR.top && touch.clientY <= cCR.bottom) { playSoundEffect_FN(sfxButtonClick); changeCharButton.click();} touchActionIdentifier = null; return; } if (gameOver) { touchActionIdentifier = null; return; } isPotentialTap = true; clearTimeout(tapTimeout); tapTimeout = setTimeout(() => { isPotentialTap = false; }, TAP_DURATION_THRESHOLD_CONST * 1.5); if (!isSliding && !isBoosting && currentPlayerState !== 'crouching') { const cB = parseFloat(player.style.bottom); if (!isJumping && cB <= playerBaseBottom_CONST + 5) { jump_FN(); isHoldingJump = true; } else if (isJumping) isHoldingJump = true; } else isHoldingJump = false; } }
+    function handleTouchStart_FN(e) { if (isPaused || isCountingDown || isInStartingAnimation) return; e.preventDefault(); if (gameOver && gameOverScreen && gameOverScreen.classList.contains('hidden')) return; if (touchActionIdentifier !== null) return; const touch = e.changedTouches[0]; touchActionIdentifier = touch.identifier; touchStartY = touch.clientY; touchStartTime = Date.now(); isTouchSliding = false; if (isBoosting) { playerBoostStartY = playerLogicalBottom; boostTargetY = playerBoostStartY; boostVelocityY = 0; } else { const gaugeRect = powerGaugeContainer.getBoundingClientRect(); if (powerGaugeValue >= POWER_GAUGE_MAX_CONST && touch.clientX >= gaugeRect.left && touch.clientX <= gaugeRect.right && touch.clientY >= gaugeRect.top && touch.clientY <= gaugeRect.bottom) { activateBoost_FN(); touchActionIdentifier = null; return; } if (gameOverScreen && !gameOverScreen.classList.contains('hidden')) { const rR = restartButton.getBoundingClientRect(), cCR = changeCharButton.getBoundingClientRect(); if (touch.clientX >= rR.left && touch.clientX <= rR.right && touch.clientY >= rR.top && touch.clientY <= rR.bottom) { playSoundEffect_FN(sfxButtonClick); restartButton.click(); } else if (touch.clientX >= cCR.left && touch.clientX <= cCR.right && touch.clientY >= cCR.top && touch.clientY <= cCR.bottom) { playSoundEffect_FN(sfxButtonClick); changeCharButton.click();} touchActionIdentifier = null; return; } if (gameOver) { touchActionIdentifier = null; return; } isPotentialTap = true; clearTimeout(tapTimeout); tapTimeout = setTimeout(() => { isPotentialTap = false; }, TAP_DURATION_THRESHOLD_CONST * 1.5); if (!isSliding && !isBoosting && currentPlayerState !== 'crouching') { const cB = playerLogicalBottom; if (!isJumping && cB <= playerBaseBottom_CONST + 5) { jump_FN(); isHoldingJump = true; } else if (isJumping) isHoldingJump = true; } else isHoldingJump = false; } }
     function handleTouchMove_FN(e) { if (isPaused || isCountingDown || isInStartingAnimation) return; e.preventDefault(); if (gameOver || touchActionIdentifier === null) return; let cT = null; for (let i = 0; i < e.changedTouches.length; i++) if (e.changedTouches[i].identifier === touchActionIdentifier) { cT = e.changedTouches[i]; break; } if (!cT) return; if (isBoosting) { const cY = cT.clientY, dY = cY - touchStartY; let tPB = playerBoostStartY - (dY / currentScale); boostTargetY = Math.max(BOOST_MIN_BOTTOM_CONST, Math.min(tPB, BOOST_MAX_BOTTOM_CONST)); } else if (!isTouchSliding) { const tCY = cT.clientY, dY = tCY - touchStartY, dT = Date.now() - touchStartTime; if (dY > SWIPE_THRESHOLD_Y_CONST && dT < SWIPE_MAX_TIME_CONST) { isPotentialTap = false; clearTimeout(tapTimeout); isHoldingJump = false; if (isJumping && !isSliding && currentPlayerState !== 'crouching') slamDown_FN(); else if (!isJumping && !isSliding && currentPlayerState !== 'crouching') { startSlide_FN(); isTouchSliding = true; } } else if (dY < -SWIPE_THRESHOLD_Y_CONST / 2) { if (isPotentialTap) { isPotentialTap = false; clearTimeout(tapTimeout); } } } }
     function handleTouchEnd_FN(e) { if (isPaused || isCountingDown || isInStartingAnimation) return; e.preventDefault(); if (touchActionIdentifier === null) return; let eT = null; for (let i = 0; i < e.changedTouches.length; i++) if (e.changedTouches[i].identifier === touchActionIdentifier) { eT = e.changedTouches[i]; break; } if (!eT) return; clearTimeout(tapTimeout); isHoldingJump = false; isPotentialTap = false; if (!isBoosting && isSliding) stopSlide_FN(); touchActionIdentifier = null; isTouchSliding = false; }
     function clearSlideTimeouts_FN() { clearTimeout(slideEnterTimeout); slideEnterTimeout = null; clearTimeout(slideExitTimeout); slideExitTimeout = null; }
-    function forceStopSlideMechanics_FN() { const wasSlidingOrCrouching = isSliding || currentPlayerState === 'sliding' || currentPlayerState === 'crouching'; isSliding = false; isSlammingDown = false; clearSlideTimeouts_FN(); if (wasSlidingOrCrouching && sfxSlide) stopSoundEffect_FN(sfxSlide); if (player && (currentPlayerState === 'sliding' || currentPlayerState === 'crouching')) { player.style.height = `${playerHeight_CONST}px`; if (parseFloat(player.style.bottom) <= playerBaseBottom_CONST + 5 && !isJumping && !isBoosting) { player.style.bottom = `${playerBaseBottom_CONST}px`; setPlayerState_FN('running'); } } }
+    function forceStopSlideMechanics_FN() { const wasSlidingOrCrouching = isSliding || currentPlayerState === 'sliding' || currentPlayerState === 'crouching'; isSliding = false; isSlammingDown = false; clearSlideTimeouts_FN(); if (wasSlidingOrCrouching && sfxSlide) stopSoundEffect_FN(sfxSlide); if (player && (currentPlayerState === 'sliding' || currentPlayerState === 'crouching')) { player.style.height = `${playerHeight_CONST}px`; if (playerLogicalBottom <= playerBaseBottom_CONST + 5 && !isJumping && !isBoosting) { playerLogicalBottom = playerBaseBottom_CONST; setPlayerState_FN('running'); } } }
     function createDebrisParticle_FN(impactX, impactY) { if (!gameContainer) return; const p = document.createElement('div'); p.classList.add('debris-particle'); const s = Math.random()*6+3; p.style.width=`${s}px`; p.style.height=`${s}px`; p.style.left=`${impactX+(Math.random()-.5)*20}px`; p.style.top=`${impactY+(Math.random()-.5)*20}px`; gameContainer.appendChild(p); const a=Math.random()*Math.PI*2,eX=Math.cos(a)*(Math.random()*DEBRIS_SPREAD_CONST+30),eY=Math.sin(a)*(Math.random()*DEBRIS_SPREAD_CONST+30)-20; p.animate([{transform:'translate(0,0) scale(1)',opacity:.9},{transform:`translate(${eX}px, ${eY}px) scale(.3)`,opacity:0}],{duration:Math.random()*700+600,easing:'cubic-bezier(.25,.1,.25,1)'}).onfinish=()=>{if(p.parentNode)p.remove();};}
     function spawnSmokePlume_FN(x,y){if(!gameContainer)return;const p=document.createElement('div');p.classList.add('smoke-plume');p.style.left=`${x-SMOKE_PLUME_ASSET_SIZE_CONST/2}px`;p.style.top=`${y-SMOKE_PLUME_ASSET_SIZE_CONST/2}px`;gameContainer.appendChild(p);p.addEventListener('animationend',()=>{if(p.parentNode)p.remove();},{once:true});}
 
     function startGame_FN() {
-        console.log("startGame_FN: Called");
         isPaused = false; isCountingDown = false;
         if (gameOverScreen && !gameOverScreen.classList.contains('hidden')) gameOverScreen.classList.add('hidden');
         if (pauseOverlay && !pauseOverlay.classList.contains('hidden')) pauseOverlay.classList.add('hidden');
@@ -484,8 +476,18 @@ document.addEventListener('DOMContentLoaded', () => {
         stopAllMusic_FN(); activeMusicTrack = backgroundMusic;
         lastObstacleTypeSpawned = null; consecutiveObstacleTypeSpawns = 0;
         if (startWall) { startWall.style.display = 'block'; startWall.classList.remove('breaking'); startWall.style.opacity = '1'; startWall.style.transform = 'scale(1)'; startWall.style.backgroundImage = "url('img/wall-texture-solid.png')"; startWall.style.left = '0px'; }
+        
         resetPlayerVisuals_FN();
-        if(player) { player.style.display = 'block'; player.style.left = `${PLAYER_ANIM_START_X_CONST}px`; player.style.bottom = `${playerBaseBottom_CONST + PLAYER_ANIM_START_Y_OFFSET_CONST}px`; }
+        // Reset logical coordinates
+        playerLogicalLeft = PLAYER_ANIM_START_X_CONST;
+        playerLogicalBottom = playerBaseBottom_CONST + PLAYER_ANIM_START_Y_OFFSET_CONST;
+        
+        if(player) { 
+            player.style.display = 'block'; 
+            player.style.left = `${playerLogicalLeft}px`; 
+            player.style.bottom = `${playerLogicalBottom}px`; 
+        }
+        
         setPlayerState_FN('jumping-down'); playerDY = 0;
         bg1PosX = 0; bg2PosX = 0; groundPosX = 0; ceilingPosX = 0;
         if (bgLayer1) bgLayer1.style.backgroundPositionX = '0px'; if (bgLayer2) bgLayer2.style.backgroundPositionX = '0px';
@@ -507,7 +509,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(scalerWrapper) scalerWrapper.classList.remove('screen-shaking');
         timeSinceLastParticle = 0; clearAllIntervalsAndFrames_FN(); 
         
-        // Reset Time Accumulator for fixed physics loop
         timeAccumulator = 0; 
         lastTimestamp = 0;
         
@@ -523,13 +524,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const deltaTime = (timestamp - lastTimestamp) / 1000;
         lastTimestamp = timestamp;
         const dt = Math.min(deltaTime, 0.1);
-        let playerCurrentLeft = parseFloat(player.style.left);
-        let playerCurrentBottom = parseFloat(player.style.bottom);
-        const playerFrontEdgeX = playerCurrentLeft + playerWidth_CONST;
+        
+        const playerFrontEdgeX = playerLogicalLeft + playerWidth_CONST;
 
-        if (playerCurrentLeft < PLAYER_ANIM_TARGET_X_CONST) { playerCurrentLeft += PLAYER_ENTRY_FORWARD_SPEED_CONST * dt; if (playerCurrentLeft > PLAYER_ANIM_TARGET_X_CONST) playerCurrentLeft = PLAYER_ANIM_TARGET_X_CONST; player.style.left = `${playerCurrentLeft}px`; }
-        if (playerCurrentBottom > playerBaseBottom_CONST) { playerDY -= PLAYER_LANDING_GRAVITY_CONST * dt * 60; playerCurrentBottom += playerDY * dt * 60; if (playerCurrentBottom < playerBaseBottom_CONST) { playerCurrentBottom = playerBaseBottom_CONST; playerDY = 0; if(!isBoosting && !isJumping) { setPlayerState_FN('running'); if (sfxFootsteps.length > 0) { const randomFootstepSfx = getRandomElement_FN(sfxFootsteps); if (randomFootstepSfx) playSoundEffect_FN(randomFootstepSfx); timeSinceLastFootstep = 0; footstepSfxPlaying = true; } } } player.style.bottom = `${playerCurrentBottom}px`; if (playerCurrentBottom > playerBaseBottom_CONST && currentPlayerState !== 'jumping-down') setPlayerState_FN('jumping-down');
-        } else if (currentPlayerState === 'jumping-down' && !isBoosting && !isJumping && playerCurrentBottom <= playerBaseBottom_CONST) { setPlayerState_FN('running'); if (sfxFootsteps.length > 0 && !footstepSfxPlaying) { const randomFootstepSfx = getRandomElement_FN(sfxFootsteps); if (randomFootstepSfx) playSoundEffect_FN(randomFootstepSfx); timeSinceLastFootstep = 0; footstepSfxPlaying = true; } }
+        if (playerLogicalLeft < PLAYER_ANIM_TARGET_X_CONST) { 
+            playerLogicalLeft += PLAYER_ENTRY_FORWARD_SPEED_CONST * dt; 
+            if (playerLogicalLeft > PLAYER_ANIM_TARGET_X_CONST) playerLogicalLeft = PLAYER_ANIM_TARGET_X_CONST; 
+            player.style.left = `${playerLogicalLeft}px`; 
+        }
+        
+        if (playerLogicalBottom > playerBaseBottom_CONST) { 
+            playerDY -= PLAYER_LANDING_GRAVITY_CONST * dt * 60; 
+            playerLogicalBottom += playerDY * dt * 60; 
+            if (playerLogicalBottom < playerBaseBottom_CONST) { 
+                playerLogicalBottom = playerBaseBottom_CONST; playerDY = 0; 
+                if(!isBoosting && !isJumping) { 
+                    setPlayerState_FN('running'); 
+                    if (sfxFootsteps.length > 0) { const randomFootstepSfx = getRandomElement_FN(sfxFootsteps); if (randomFootstepSfx) playSoundEffect_FN(randomFootstepSfx); timeSinceLastFootstep = 0; footstepSfxPlaying = true; } 
+                } 
+            } 
+            player.style.bottom = `${playerLogicalBottom}px`; 
+            if (playerLogicalBottom > playerBaseBottom_CONST && currentPlayerState !== 'jumping-down') setPlayerState_FN('jumping-down');
+        } else if (currentPlayerState === 'jumping-down' && !isBoosting && !isJumping && playerLogicalBottom <= playerBaseBottom_CONST) { 
+            setPlayerState_FN('running'); 
+            if (sfxFootsteps.length > 0 && !footstepSfxPlaying) { const randomFootstepSfx = getRandomElement_FN(sfxFootsteps); if (randomFootstepSfx) playSoundEffect_FN(randomFootstepSfx); timeSinceLastFootstep = 0; footstepSfxPlaying = true; } 
+        }
 
         if (!wallBroken && playerFrontEdgeX >= WALL_HIT_POINT_X_CONST) {
             wallBroken = true;
@@ -537,14 +556,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (playerCurrentLeft >= PLAYER_ANIM_TARGET_X_CONST && playerCurrentBottom <= playerBaseBottom_CONST) {
+        if (playerLogicalLeft >= PLAYER_ANIM_TARGET_X_CONST && playerLogicalBottom <= playerBaseBottom_CONST) {
             isInStartingAnimation = false;
             if (playerInitiallyHidden) { player.style.opacity = '1'; playerInitiallyHidden = false; }
             if (currentPlayerState === 'jumping-down') setPlayerState_FN('running');
             if (startWall && startWall.style.backgroundImage.includes('solid') && !wallTextureSwapped) { startWall.style.backgroundImage = "url('img/wall-texture-hole.png')"; wallTextureSwapped = true; }
             if (activeMusicTrack === backgroundMusic) { playActiveMusic_FN(); } else if (menuMusic && activeMusicTrack === menuMusic && !menuMusic.paused) { menuMusic.pause(); menuMusic.currentTime = 0; activeMusicTrack = backgroundMusic; playActiveMusic_FN(); }
             lastTimestamp = 0;
-            timeAccumulator = 0; // Reset for actual gameplay loop
+            timeAccumulator = 0; 
             if (playerShadow) playerShadow.style.display = 'block';
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             animationFrameId = null; animationFrameId = requestAnimationFrame(gameLoop_FN);
@@ -559,17 +578,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function updatePowerGaugeVisual_FN() { if (!powerGaugeContainer || !powerGaugeFill) return; const wasFull = powerGaugeContainer.classList.contains('full'); const fill = Math.min(100, (powerGaugeValue / POWER_GAUGE_MAX_CONST) * 100); powerGaugeFill.style.height = `${fill}%`; if (powerGaugeValue >= POWER_GAUGE_MAX_CONST) { powerGaugeContainer.classList.add('full'); if (powerGaugeText) powerGaugeText.textContent = "READY!"; if (!wasFull && !isQhkInvincible && !isBoosting && sfxKiwi) playSoundEffect_FN(sfxKiwi); } else { powerGaugeContainer.classList.remove('full'); if (powerGaugeText) powerGaugeText.textContent = "BOOST"; } }
     function fillPowerGauge_FN() { if (isBoosting) return; powerGaugeValue = POWER_GAUGE_MAX_CONST; updatePowerGaugeVisual_FN(); }
     function resetPowerGauge_FN() { powerGaugeValue = 0; isBoosting = false; if(player) {player.classList.remove('boosting', 'boosting-anim'); player.style.boxShadow = 'none';} clearTimeout(boostTimer); boostTimer = null; boostTimeRemaining = 0; if(powerGaugeContainer) powerGaugeContainer.classList.remove('full'); updatePowerGaugeVisual_FN(); }
-    function setPlayerState_FN(newState) { if (!player) return; if (isBoosting && newState !== 'idle' && !newState.startsWith('boosting')) { newState = 'boosting-anim'; } const oldState = currentPlayerState; if (newState !== 'sliding' && newState !== 'crouching' && sfxSlide && !sfxSlide.paused) { stopSoundEffect_FN(sfxSlide); } const charSprites = spritePaths_CONST[selectedCharacterClass]; if (!charSprites) { console.warn("Sprites missing for:", selectedCharacterClass); return; } const classesToPreserve = [selectedCharacterClass]; if (player.classList.contains('qhk-invincible-effect')) classesToPreserve.push('qhk-invincible-effect'); if (player.classList.contains('flashing')) classesToPreserve.push('flashing'); player.className = classesToPreserve.join(' '); let targetAnimationClass = ''; let spriteUrl = ''; let newH = playerHeight_CONST, newW = playerWidth_CONST, newB = player.style.bottom; let newBackgroundSize = `${playerWidth_CONST}px ${playerHeight_CONST}px`; player.style.animation = 'none'; switch (newState) { case 'running': targetAnimationClass = 'running'; spriteUrl = charSprites.run; if (!isJumping && !isBoosting) newB = `${playerBaseBottom_CONST}px`; player.style.animation = ''; newBackgroundSize = `${playerWidth_CONST * 10}px ${playerHeight_CONST}px`; break; case 'jumping-up': targetAnimationClass = 'jumping-up'; spriteUrl = charSprites.jumpUp; if (oldState === 'sliding' || oldState === 'crouching') stopSoundEffect_FN(sfxSlide); break; case 'jumping-down': targetAnimationClass = 'jumping-down'; spriteUrl = charSprites.jumpDown; if (oldState === 'sliding' || oldState === 'crouching') stopSoundEffect_FN(sfxSlide); break; case 'sliding': targetAnimationClass = 'slide'; spriteUrl = charSprites.slide; newH = playerSlideHeight_CONST; newW = playerWidth_CONST; newB = `${playerBaseBottom_CONST}px`; playSoundEffect_FN(sfxSlide, true); newBackgroundSize = `${playerWidth_CONST}px ${playerSlideHeight_CONST}px`; break; case 'crouching': targetAnimationClass = 'crouching'; spriteUrl = charSprites.crouch; newH = playerCrouchHeight_CONST; newW = playerWidth_CONST; newB = `${playerBaseBottom_CONST}px`; newBackgroundSize = `${playerWidth_CONST}px ${playerCrouchHeight_CONST}px`; break; case 'boosting-anim': case 'boosting': targetAnimationClass = 'boosting-anim'; player.classList.add('boosting'); spriteUrl = charSprites.boostAnim; newH = playerBoostHeight_CONST; newW = playerBoostWidth_CONST; if (oldState === 'sliding' || oldState === 'crouching') stopSoundEffect_FN(sfxSlide); player.style.animation = ''; newBackgroundSize = `${playerBoostWidth_CONST * 3}px ${playerBoostHeight_CONST}px`; break; case 'idle': spriteUrl = charSprites.run; newB = `${playerBaseBottom_CONST}px`; newBackgroundSize = `${playerWidth_CONST * 10}px ${playerHeight_CONST}px`; player.style.backgroundPositionX = '0px'; break; default: console.warn("Unknown player state:", newState); return; } if (spriteUrl && player.style.backgroundImage !== `url('${spriteUrl}')`) { player.style.backgroundImage = `url('${spriteUrl}')`; } if (player.style.backgroundSize !== newBackgroundSize) { player.style.backgroundSize = newBackgroundSize; } if (targetAnimationClass && !player.classList.contains(targetAnimationClass)) { player.classList.add(targetAnimationClass); } if (player.style.height !== `${newH}px`) player.style.height = `${newH}px`; if (player.style.width !== `${newW}px`) player.style.width = `${newW}px`; if (player.style.bottom !== newB) player.style.bottom = newB; if (newState !== 'running' && newState !== 'boosting-anim' && newState !== 'boosting') { if (player.style.backgroundPositionX !== '0px') player.style.backgroundPositionX = '0px'; if (player.style.backgroundPositionY !== '0px') player.style.backgroundPositionY = '0px'; } currentPlayerState = newState; }
+    function setPlayerState_FN(newState) { if (!player) return; if (isBoosting && newState !== 'idle' && !newState.startsWith('boosting')) { newState = 'boosting-anim'; } const oldState = currentPlayerState; if (newState !== 'sliding' && newState !== 'crouching' && sfxSlide && !sfxSlide.paused) { stopSoundEffect_FN(sfxSlide); } const charSprites = spritePaths_CONST[selectedCharacterClass]; if (!charSprites) { console.warn("Sprites missing for:", selectedCharacterClass); return; } const classesToPreserve = [selectedCharacterClass]; if (player.classList.contains('qhk-invincible-effect')) classesToPreserve.push('qhk-invincible-effect'); if (player.classList.contains('flashing')) classesToPreserve.push('flashing'); player.className = classesToPreserve.join(' '); let targetAnimationClass = ''; let spriteUrl = ''; let newH = playerHeight_CONST, newW = playerWidth_CONST, newB = playerLogicalBottom; let newBackgroundSize = `${playerWidth_CONST}px ${playerHeight_CONST}px`; player.style.animation = 'none'; switch (newState) { case 'running': targetAnimationClass = 'running'; spriteUrl = charSprites.run; if (!isJumping && !isBoosting) newB = playerBaseBottom_CONST; player.style.animation = ''; newBackgroundSize = `${playerWidth_CONST * 10}px ${playerHeight_CONST}px`; break; case 'jumping-up': targetAnimationClass = 'jumping-up'; spriteUrl = charSprites.jumpUp; if (oldState === 'sliding' || oldState === 'crouching') stopSoundEffect_FN(sfxSlide); break; case 'jumping-down': targetAnimationClass = 'jumping-down'; spriteUrl = charSprites.jumpDown; if (oldState === 'sliding' || oldState === 'crouching') stopSoundEffect_FN(sfxSlide); break; case 'sliding': targetAnimationClass = 'slide'; spriteUrl = charSprites.slide; newH = playerSlideHeight_CONST; newW = playerWidth_CONST; newB = playerBaseBottom_CONST; playSoundEffect_FN(sfxSlide, true); newBackgroundSize = `${playerWidth_CONST}px ${playerSlideHeight_CONST}px`; break; case 'crouching': targetAnimationClass = 'crouching'; spriteUrl = charSprites.crouch; newH = playerCrouchHeight_CONST; newW = playerWidth_CONST; newB = playerBaseBottom_CONST; newBackgroundSize = `${playerWidth_CONST}px ${playerCrouchHeight_CONST}px`; break; case 'boosting-anim': case 'boosting': targetAnimationClass = 'boosting-anim'; player.classList.add('boosting'); spriteUrl = charSprites.boostAnim; newH = playerBoostHeight_CONST; newW = playerBoostWidth_CONST; if (oldState === 'sliding' || oldState === 'crouching') stopSoundEffect_FN(sfxSlide); player.style.animation = ''; newBackgroundSize = `${playerBoostWidth_CONST * 3}px ${playerBoostHeight_CONST}px`; break; case 'idle': spriteUrl = charSprites.run; newB = playerBaseBottom_CONST; newBackgroundSize = `${playerWidth_CONST * 10}px ${playerHeight_CONST}px`; player.style.backgroundPositionX = '0px'; break; default: console.warn("Unknown player state:", newState); return; } if (spriteUrl && player.style.backgroundImage !== `url('${spriteUrl}')`) { player.style.backgroundImage = `url('${spriteUrl}')`; } if (player.style.backgroundSize !== newBackgroundSize) { player.style.backgroundSize = newBackgroundSize; } if (targetAnimationClass && !player.classList.contains(targetAnimationClass)) { player.classList.add(targetAnimationClass); } if (player.style.height !== `${newH}px`) player.style.height = `${newH}px`; if (player.style.width !== `${newW}px`) player.style.width = `${newW}px`; playerLogicalBottom = newB; if (newState !== 'running' && newState !== 'boosting-anim' && newState !== 'boosting') { if (player.style.backgroundPositionX !== '0px') player.style.backgroundPositionX = '0px'; if (player.style.backgroundPositionY !== '0px') player.style.backgroundPositionY = '0px'; } currentPlayerState = newState; }
     function clearAllIntervalsAndFrames_FN() { clearTimeout(boostTimer); boostTimer = null; clearTimeout(postHitInvincibilityTimer); postHitInvincibilityTimer = null; clearTimeout(qhkInvincibilityTimer); qhkInvincibilityTimer = null; clearTimeout(qhkCoinSpawnStopTimer); qhkCoinSpawnStopTimer = null; stopHueAnimationLoop_FN(); if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } }
     function clearGameElements_FN(selector) { if(!gameContainer) return; const elements = gameContainer.querySelectorAll(selector); elements.forEach(el => { if (DEBUG_HITBOXES_CONST && (el.classList.contains('obstacle') || el.classList.contains('thrown-bottle')) && el.debugBox && el.debugBox.parentNode) el.debugBox.remove(); if (el.classList.contains('obstacle-debug') && el.parentNode) el.remove(); if (el.classList.contains('boost-particle') && el.parentNode) el.remove(); if (el.classList.contains('debris-particle') && el.parentNode) el.remove(); if (el.classList.contains('smoke-plume') && el.parentNode) el.remove(); if (!el.classList.contains('obstacle-debug') && !el.classList.contains('boost-particle') && !el.classList.contains('debris-particle') && !el.classList.contains('smoke-plume') && el.parentNode && el.id !== 'start-wall') el.remove(); }); }
-    function jump_FN() { if (!player) return; if (currentPlayerState === 'crouching' || isSliding || isBoosting || parseFloat(player.style.bottom) > playerBaseBottom_CONST + 5 || isJumping) return; forceStopSlideMechanics_FN(); isSlammingDown = false; isJumping = true; playerDY = jumpForce_CONST; setPlayerState_FN('jumping-up'); if(sfxJump) playSoundEffect_FN(sfxJump); }
-    function startSlide_FN() { if (!player) return; if (isSliding || isBoosting || isJumping || currentPlayerState === 'crouching' || parseFloat(player.style.bottom) > playerBaseBottom_CONST + 5) return; forceStopSlideMechanics_FN(); isJumping = false; isSlammingDown = false; isSliding = true; playerDY = 0; isHoldingJump = false; setPlayerState_FN('crouching'); slideEnterTimeout = setTimeout(() => { if (isSliding && currentPlayerState === 'crouching') setPlayerState_FN('sliding'); slideEnterTimeout = null; }, CROUCH_TRANSITION_DURATION_CONST); }
+    function jump_FN() { if (!player) return; if (currentPlayerState === 'crouching' || isSliding || isBoosting || playerLogicalBottom > playerBaseBottom_CONST + 5 || isJumping) return; forceStopSlideMechanics_FN(); isSlammingDown = false; isJumping = true; playerDY = jumpForce_CONST; setPlayerState_FN('jumping-up'); if(sfxJump) playSoundEffect_FN(sfxJump); }
+    function startSlide_FN() { if (!player) return; if (isSliding || isBoosting || isJumping || currentPlayerState === 'crouching' || playerLogicalBottom > playerBaseBottom_CONST + 5) return; forceStopSlideMechanics_FN(); isJumping = false; isSlammingDown = false; isSliding = true; playerDY = 0; isHoldingJump = false; setPlayerState_FN('crouching'); slideEnterTimeout = setTimeout(() => { if (isSliding && currentPlayerState === 'crouching') setPlayerState_FN('sliding'); slideEnterTimeout = null; }, CROUCH_TRANSITION_DURATION_CONST); }
     function slamDown_FN() { if (!player) return; if (!isJumping || isSliding || isBoosting || currentPlayerState === 'crouching') return; forceStopSlideMechanics_FN(); playerDY = -jumpForce_CONST * 1.5; isHoldingJump = false; isSlammingDown = true; setPlayerState_FN('jumping-down'); }
     function stopSlide_FN() { const wasSliding = isSliding, wasCrouchSlide = currentPlayerState === 'sliding' || currentPlayerState === 'crouching'; clearTimeout(slideEnterTimeout); slideEnterTimeout = null; isSliding = false; if (wasSliding && currentPlayerState === 'crouching' && sfxSlide) stopSoundEffect_FN(sfxSlide); if (!wasSliding && !wasCrouchSlide) return; if (wasCrouchSlide) { if (currentPlayerState === 'sliding' && !isJumping) setPlayerState_FN('crouching'); if (slideExitTimeout === null) slideExitTimeout = setTimeout(() => { if (currentPlayerState === 'crouching' && !isSliding && !isBoosting && !isJumping) setPlayerState_FN('running'); slideExitTimeout = null; }, CROUCH_TRANSITION_DURATION_CONST); } }
-    function activateBoost_FN() { if (!player || !scalerWrapper) return; if (isBoosting || gameOver || powerGaugeValue < POWER_GAUGE_MAX_CONST) return; forceStopSlideMechanics_FN(); isSlammingDown = false; isJumping = false; playerDY = 0; boostVelocityY = 0; isBoosting = true; scoreMultiplier = BOOST_SCORE_MULTIPLIER_CONST; powerGaugeValue = 0; updatePowerGaugeVisual_FN(); gameSpeed = originalGameSpeed * BOOST_SPEED_MULTIPLIER_CONST; boostTargetY = parseFloat(player.style.bottom); setPlayerState_FN('boosting-anim'); timeSinceLastParticle = 0; scalerWrapper.classList.add('screen-shaking'); clearTimeout(boostTimer); boostStartTime = Date.now(); boostTimer = setTimeout(deactivateBoost_FN, BOOST_DURATION_CONST); if(sfxBoost) playSoundEffect_FN(sfxBoost); }
-    function deactivateBoost_FN() { if (!player || !scalerWrapper) return; if (!isBoosting) return; isBoosting = false; scoreMultiplier = 1; boostVelocityY = 0; gameSpeed = originalGameSpeed; clearTimeout(boostTimer); boostTimer = null; boostTimeRemaining = 0; resetPowerGauge_FN(); scalerWrapper.classList.remove('screen-shaking'); let cB = parseFloat(player.style.bottom); if (cB > playerBaseBottom_CONST + 5) { isJumping = true; playerDY = 0; setPlayerState_FN('jumping-down'); } else { isJumping = false; playerDY = 0; setPlayerState_FN('running'); } startPostHitInvincibility_FN(); }
+    function activateBoost_FN() { if (!player || !scalerWrapper) return; if (isBoosting || gameOver || powerGaugeValue < POWER_GAUGE_MAX_CONST) return; forceStopSlideMechanics_FN(); isSlammingDown = false; isJumping = false; playerDY = 0; boostVelocityY = 0; isBoosting = true; scoreMultiplier = BOOST_SCORE_MULTIPLIER_CONST; powerGaugeValue = 0; updatePowerGaugeVisual_FN(); gameSpeed = originalGameSpeed * BOOST_SPEED_MULTIPLIER_CONST; boostTargetY = playerLogicalBottom; setPlayerState_FN('boosting-anim'); timeSinceLastParticle = 0; scalerWrapper.classList.add('screen-shaking'); clearTimeout(boostTimer); boostStartTime = Date.now(); boostTimer = setTimeout(deactivateBoost_FN, BOOST_DURATION_CONST); if(sfxBoost) playSoundEffect_FN(sfxBoost); }
+    function deactivateBoost_FN() { if (!player || !scalerWrapper) return; if (!isBoosting) return; isBoosting = false; scoreMultiplier = 1; boostVelocityY = 0; gameSpeed = originalGameSpeed; clearTimeout(boostTimer); boostTimer = null; boostTimeRemaining = 0; resetPowerGauge_FN(); scalerWrapper.classList.remove('screen-shaking'); if (playerLogicalBottom > playerBaseBottom_CONST + 5) { isJumping = true; playerDY = 0; setPlayerState_FN('jumping-down'); } else { isJumping = false; playerDY = 0; setPlayerState_FN('running'); } startPostHitInvincibility_FN(); }
     function updateScore_FN(dt) { if (!gameOver && scoreDisplay) { score += SCORE_INCREMENT_PER_SECOND_CONST * dt * scoreMultiplier; scoreDisplay.textContent = Math.floor(score); } }
-    function spawnParticle_FN() { if (gameOver || !gameContainer || !gameContainer.offsetParent || !isBoosting || !player) return; const p=document.createElement('div');p.classList.add('boost-particle');const pW=parseFloat(player.style.width)||playerBoostWidth_CONST,pH=parseFloat(player.style.height)||playerBoostHeight_CONST,pL=parseFloat(player.style.left),pB=parseFloat(player.style.bottom);const sX=pL-(pW*.1),sY=pB+(pH/2),sTop=GAME_DESIGN_HEIGHT_CONST-sY;const oX=(Math.random()-.5)*BOOST_PARTICLE_SPAWN_SPREAD_X_CONST,oY=(Math.random()-.5)*BOOST_PARTICLE_SPAWN_SPREAD_Y_CONST;p.style.left=`${sX+oX}px`;p.style.top=`${sTop+oY}px`;gameContainer.appendChild(p);const tX=-(Math.random()*BOOST_PARTICLE_TRAVEL_DISTANCE_X_CONST+10),tY=(Math.random()-.5)*BOOST_PARTICLE_TRAVEL_DISTANCE_Y_CONST*2,dur=Math.random()*(BOOST_PARTICLE_MAX_DURATION_CONST-BOOST_PARTICLE_MIN_DURATION_CONST)+BOOST_PARTICLE_MIN_DURATION_CONST,iS=Math.random()*.5+.8,fS=Math.random()*.3+.1;p.animate([{transform:`translate(0,0)scale(${iS})`,opacity:.9},{transform:`translate(${tX}px,${tY}px)scale(${fS})`,opacity:0}],{duration:dur,easing:'ease-out'}).onfinish=()=>{if(p.parentNode)p.remove();};}
+    function spawnParticle_FN() { if (gameOver || !gameContainer || !gameContainer.offsetParent || !isBoosting || !player) return; const p=document.createElement('div');p.classList.add('boost-particle');const pW=parseFloat(player.style.width)||playerBoostWidth_CONST,pH=parseFloat(player.style.height)||playerBoostHeight_CONST,pL=playerLogicalLeft,pB=playerLogicalBottom;const sX=pL-(pW*.1),sY=pB+(pH/2),sTop=GAME_DESIGN_HEIGHT_CONST-sY;const oX=(Math.random()-.5)*BOOST_PARTICLE_SPAWN_SPREAD_X_CONST,oY=(Math.random()-.5)*BOOST_PARTICLE_SPAWN_SPREAD_Y_CONST;p.style.left=`${sX+oX}px`;p.style.top=`${sTop+oY}px`;gameContainer.appendChild(p);const tX=-(Math.random()*BOOST_PARTICLE_TRAVEL_DISTANCE_X_CONST+10),tY=(Math.random()-.5)*BOOST_PARTICLE_TRAVEL_DISTANCE_Y_CONST*2,dur=Math.random()*(BOOST_PARTICLE_MAX_DURATION_CONST-BOOST_PARTICLE_MIN_DURATION_CONST)+BOOST_PARTICLE_MIN_DURATION_CONST,iS=Math.random()*.5+.8,fS=Math.random()*.3+.1;p.animate([{transform:`translate(0,0)scale(${iS})`,opacity:.9},{transform:`translate(${tX}px,${tY}px)scale(${fS})`,opacity:0}],{duration:dur,easing:'ease-out'}).onfinish=()=>{if(p.parentNode)p.remove();};}
     function startHueAnimationLoop_FN() { if (!player) return; if (hueAnimationId) cancelAnimationFrame(hueAnimationId); hueAngle = 0; function animateHue() { if (!isQhkInvincible || isPaused || isCountingDown || !player) { stopHueAnimationLoop_FN(); return; } hueAngle = (hueAngle + 5) % 360; player.style.setProperty('--hue-angle', hueAngle.toString()); hueAnimationId = requestAnimationFrame(animateHue); } hueAnimationId = requestAnimationFrame(animateHue); }
     function stopHueAnimationLoop_FN() { if (hueAnimationId) { cancelAnimationFrame(hueAnimationId); hueAnimationId = null; } }
     
@@ -611,20 +630,24 @@ document.addEventListener('DOMContentLoaded', () => {
         let frameTime = timestamp - lastTimestamp; 
         lastTimestamp = timestamp; 
         
-        // Cap frame time to prevent spiraling after lag or tab switch
         if (frameTime > TIME_STEP * 4) {
             frameTime = TIME_STEP * 4;
         }
         
         timeAccumulator += frameTime; 
         
-        // Physics Loop: Run logic at exactly 60 updates per second
+        // LAG SPIKE PANIC COUNTER
+        let loopCounter = 0;
         while (timeAccumulator >= TIME_STEP) {
-            updateGamePhysics_FN(TIME_STEP / 1000); // Pass dt in seconds
+            updateGamePhysics_FN(TIME_STEP / 1000); 
             timeAccumulator -= TIME_STEP;
+            loopCounter++;
+            if (loopCounter >= 5) {
+                timeAccumulator = 0; // Drop frames, prevent death spiral
+                break;
+            }
         }
 
-        // Render visual only things (Shadows, Hitboxes) after physics
         renderGameVisuals_FN();
 
         if (!gameOver) { 
@@ -636,7 +659,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } 
     }
 
-    // --- PHYSICS AND DOM UPDATE ---
     function updateGamePhysics_FN(dt) {
         if (dt <= 0) return;
 
@@ -697,23 +719,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }); 
         } 
         
-        let currentBottom = parseFloat(player.style.bottom); 
-        let newBottom = currentBottom; 
+        let newBottom = playerLogicalBottom; 
         
         if (isBoosting) { 
             if (currentPlayerState !== 'boosting-anim') setPlayerState_FN('boosting-anim'); 
             if (touchActionIdentifier !== null) { 
-                const difference = boostTargetY - currentBottom; 
-                newBottom = currentBottom + difference * BOOST_SMOOTH_FACTOR_CONST; 
+                const difference = boostTargetY - playerLogicalBottom; 
+                newBottom = playerLogicalBottom + difference * BOOST_SMOOTH_FACTOR_CONST; 
                 if (Math.abs(difference) < 0.5) newBottom = boostTargetY; 
             } else { 
                 if (boostVelocityY !== 0) { 
                     let boostMove = boostVelocityY * dt * 60; 
-                    newBottom = currentBottom + boostMove; 
+                    newBottom = playerLogicalBottom + boostMove; 
                 } 
             } 
             newBottom = Math.max(BOOST_MIN_BOTTOM_CONST, Math.min(newBottom, BOOST_MAX_BOTTOM_CONST)); 
-            player.style.bottom = newBottom + 'px'; 
+            playerLogicalBottom = newBottom; 
             
             timeSinceLastParticle += dt; 
             if (timeSinceLastParticle >= PARTICLE_SPAWN_INTERVAL_CONST) { 
@@ -726,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 playerDY += JUMP_HOLD_BOOST_CONST * dt * 60; 
             } 
             let verticalChange = playerDY * dt * 60; 
-            newBottom = currentBottom + verticalChange; 
+            newBottom = playerLogicalBottom + verticalChange; 
             const jumpCeiling = playerBaseBottom_CONST + MAX_JUMP_HEIGHT_CONST; 
             if (newBottom >= jumpCeiling && playerDY > 0) { 
                 newBottom = jumpCeiling; 
@@ -734,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
             if (newBottom <= playerBaseBottom_CONST && playerDY <= 0) { 
                 newBottom = playerBaseBottom_CONST; 
-                player.style.bottom = `${newBottom}px`; 
+                playerLogicalBottom = newBottom; 
                 isJumping = false; 
                 playerDY = 0; 
                 if (isSlammingDown) { 
@@ -752,23 +773,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     } 
                 } 
             } else { 
-                player.style.bottom = `${newBottom}px`; 
+                playerLogicalBottom = newBottom; 
                 setPlayerState_FN(playerDY < JUMP_DOWN_THRESHOLD_CONST ? 'jumping-down' : 'jumping-up'); 
             } 
         } else if (isSliding || currentPlayerState === 'crouching') { 
-            if (currentBottom !== playerBaseBottom_CONST) player.style.bottom = `${playerBaseBottom_CONST}px`; 
+            if (playerLogicalBottom !== playerBaseBottom_CONST) playerLogicalBottom = playerBaseBottom_CONST; 
         } else { 
-            if (currentBottom !== playerBaseBottom_CONST) player.style.bottom = `${playerBaseBottom_CONST}px`; 
+            if (playerLogicalBottom !== playerBaseBottom_CONST) playerLogicalBottom = playerBaseBottom_CONST; 
             if (currentPlayerState !== 'running' && currentPlayerState !== 'idle' && !isPaused && !isCountingDown && !gameOver) { 
                 setPlayerState_FN('running'); 
             } 
         } 
         
-        if (!isJumping && !isBoosting && parseFloat(player.style.bottom) < playerBaseBottom_CONST ) { 
-            player.style.bottom = `${playerBaseBottom_CONST}px`; 
+        if (!isJumping && !isBoosting && playerLogicalBottom < playerBaseBottom_CONST ) { 
+            playerLogicalBottom = playerBaseBottom_CONST; 
         } 
         
-        if (sfxFootsteps.length > 0 && !isBoosting && !isJumping && !isSliding && currentPlayerState === 'running' && parseFloat(player.style.bottom) <= playerBaseBottom_CONST + 5 && !gameOver && !isPaused && !isCountingDown && !isInStartingAnimation) { 
+        if (sfxFootsteps.length > 0 && !isBoosting && !isJumping && !isSliding && currentPlayerState === 'running' && playerLogicalBottom <= playerBaseBottom_CONST + 5 && !gameOver && !isPaused && !isCountingDown && !isInStartingAnimation) { 
             timeSinceLastFootstep += dt; 
             if (timeSinceLastFootstep >= FOOTSTEP_INTERVAL_CONST) { 
                 if (!footstepSfxPlaying) {
@@ -862,20 +883,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } 
     }
 
-    // --- RENDER VISUALS (Separated for performance) ---
     function renderGameVisuals_FN() {
+        // Update DOM with logical coordinates
+        player.style.left = `${playerLogicalLeft}px`;
+        player.style.bottom = `${playerLogicalBottom}px`;
+
         if (playerShadow && player && player.style.display !== 'none' && !gameOver && !isPaused && !isCountingDown && !isInStartingAnimation) { 
-            const playerSpriteBottom = parseFloat(player.style.bottom); 
-            const playerLeft = parseFloat(player.style.left); 
             const playerWidth = parseFloat(player.style.width) || playerWidth_CONST; 
             
-            // CSS Transform based logic for high performance
-            const shadowX = playerLeft + (playerWidth / 2) - (SHADOW_BASE_WIDTH_CONST / 2);
-            // Translate Y expects negative to move UP relative to container, positive to move DOWN.
-            // With bottom: 0, we move it DOWN by using negative groundHeight plus offsets
+            const shadowX = playerLogicalLeft + (playerWidth / 2) - (SHADOW_BASE_WIDTH_CONST / 2);
             const shadowY = -1 * (groundHeight_CONST - (SHADOW_BASE_HEIGHT_CONST / 2) + SHADOW_GROUND_OFFSET_Y_CONST);
 
-            let distanceFromPlayerBase = Math.max(0, playerSpriteBottom - playerBaseBottom_CONST); 
+            let distanceFromPlayerBase = Math.max(0, playerLogicalBottom - playerBaseBottom_CONST); 
             if (isBoosting) distanceFromPlayerBase = MAX_JUMP_HEIGHT_CONST * 1.5; 
             let scale = 1 - (distanceFromPlayerBase / (MAX_JUMP_HEIGHT_CONST * 1.2)); 
             scale = Math.max(SHADOW_MIN_SCALE_CONST, Math.min(1.0, scale)); 
@@ -896,8 +915,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (DEBUG_HITBOXES_CONST && gameContainer.offsetParent !== null) { 
             if (playerDebugElement) { 
-                const playerBaseLeft = parseFloat(player.style.left); 
-                const playerBaseBottomVal = parseFloat(player.style.bottom); 
+                const playerBaseLeft = playerLogicalLeft; 
+                const playerBaseBottomVal = playerLogicalBottom; 
                 const currentUnscaledPlayerHeight = parseFloat(player.style.height) || playerHeight_CONST; 
                 const currentUnscaledPlayerWidth = parseFloat(player.style.width) || playerWidth_CONST; 
                 const unscaledHitboxWidth = currentUnscaledPlayerWidth - 2 * HITBOX_HORIZONTAL_PADDING_CONST; 
