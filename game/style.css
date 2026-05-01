@@ -46,60 +46,54 @@ h2 {
     }
 }
 
-
 /* --- Splash Screen Button Styling --- */
 #splash-button-container {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    width: 90%; /* Or adjust to fit button */
+    width: 90%; 
+    bottom: 5%; /* Closer to the bottom for Landscape */
 }
 
 #splash-start-button {
-    font-family: "Orbitron", sans-serif; /* Or your preferred font */
-    font-size: 1.2em;  /* Adjust as needed */
+    font-family: "Orbitron", sans-serif;
+    font-size: 1.2em; 
     font-weight: bold;
     color: white;
-    background-color: #28a745; /* Example button color */
-    border: 2px solid #1e7e34; /* Example border */
-    padding: 15px 30px; /* Adjust padding */
+    background-color: #28a745;
+    border: 2px solid #1e7e34;
+    padding: 15px 30px;
     border-radius: 8px;
     cursor: pointer;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     transition: background-color 0.2s, transform 0.1s;
-    animation: pulse-button 2s infinite ease-in-out; /* Optional pulsing effect */
-    outline: none; /* Remove default browser outline */
-    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+    animation: pulse-button 2s infinite ease-in-out; 
+    outline: none; 
+    -webkit-tap-highlight-color: transparent; 
 }
 
 #splash-start-button:hover,
 #splash-start-button:focus {
-    background-color: #218838; /* Darker on hover/focus */
+    background-color: #218838;
 }
 
 #splash-start-button:active {
-    transform: scale(0.95); /* Slight shrink on press */
+    transform: scale(0.95);
     background-color: #1c7430;
-}
-
-/* Positioning for Landscape by default (bottom of the screen) */
-#splash-button-container {
-    bottom: 5%; /* Closer to the bottom */
 }
 
 /* Positioning and slightly larger button/text for Portrait */
 @media (orientation: portrait) {
     #splash-button-container {
-        bottom: 15%; /* Or adjust as you see fit for portrait */
+        bottom: 15%; 
     }
     #splash-start-button {
-        font-size: 1.3em; /* Slightly larger for portrait, or keep same */
+        font-size: 1.3em;
         padding: 12px 25px;
     }
 }
 
-/* Optional pulsing animation for the button */
 @keyframes pulse-button {
     0%, 100% {
         transform: scale(1);
@@ -120,7 +114,6 @@ body.splash-active #rotate-prompt {
     display: none !important;
 }
 
-
 #rotate-prompt {
     position: fixed;
     top: 0;
@@ -129,48 +122,43 @@ body.splash-active #rotate-prompt {
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.9);
     color: white;
-    z-index: 1900; /* Below splash, above game */
+    z-index: 1900;
     text-align: center;
     font-size: 1.8em;
-    /* display: flex; */ /* Controlled by JS/Media Query initially */
     justify-content: center;
     align-items: center;
 }
 
-#scaler-wrapper { /* Contained within page-rotator */
+#scaler-wrapper { 
     width: 100vw;
     height: 100vh;
-    display: flex; /* Will be set by JS or media query for landscape */
+    display: flex; 
     justify-content: center;
     align-items: center;
     background-color: #000;
     overflow: hidden;
 }
 
-#page-rotator { /* Contains scaler-wrapper. Visibility controlled by JS/Media Query */
+#page-rotator { 
     width: 100vw;
     height: 100vh;
-    /* display: block; */ /* Or flex, controlled by JS/Media Query */
     overflow: hidden;
 }
 
-
-/* Default to hiding game/rotator if JS doesn't set them up due to orientation */
-/* These are general states; resizeGame_FN will be more specific */
+/* Visibility controlled by JS/Media Query */
 @media (orientation: landscape) {
-    #page-rotator { display: block !important; } /* Ensure it's block or flex to show children */
+    #page-rotator { display: block !important; }
     #scaler-wrapper { display: flex !important; }
-    #rotate-prompt.hidden { display: none !important; } /* If hidden by JS, keep hidden */
-    #rotate-prompt:not(.hidden) { display: none !important; } /* If not hidden by JS, hide in landscape */
+    #rotate-prompt.hidden { display: none !important; }
+    #rotate-prompt:not(.hidden) { display: none !important; }
 }
 
 @media (orientation: portrait) {
     #page-rotator { display: none !important; }
     #scaler-wrapper { display: none !important; }
-    #rotate-prompt.hidden { display: none !important; } /* If hidden by JS, keep hidden */
-    #rotate-prompt:not(.hidden) { display: flex !important; } /* If not hidden by JS, show in portrait */
+    #rotate-prompt.hidden { display: none !important; }
+    #rotate-prompt:not(.hidden) { display: flex !important; }
 }
-
 
 #home-screen,
 #character-selection-screen,
@@ -195,9 +183,6 @@ body.splash-active #rotate-prompt {
     -ms-interpolation-mode: nearest-neighbor;
     overflow: hidden;
 }
-
-/* ... (rest of your CSS is assumed to be the same as you provided) ... */
-/* Only showing relevant parts for brevity, include your full CSS below this */
 
 .home-image-button {
     position: absolute;
@@ -404,7 +389,15 @@ input:checked + .slider:before { transform: translateX(26px); }
     letter-spacing: 1px;
 }
 
-#game-container { width: 800px; height: 450px; border: 1px solid black; overflow: hidden; background-color: #87CEEB; touch-action: manipulation; position: relative; }
+#game-container { 
+    width: 800px; 
+    height: 450px; 
+    border: 1px solid black; 
+    overflow: hidden; 
+    background-color: #87CEEB; 
+    touch-action: manipulation; 
+    position: relative; 
+}
 #game-container.game-paused * { animation-play-state: paused !important; }
 #game-container.game-paused #player.running,
 #game-container.game-paused #player.boosting-anim,
@@ -421,16 +414,64 @@ input:checked + .slider:before { transform: translateX(26px); }
 #game-container.game-paused .smoke-plume { animation-play-state: paused !important; }
 #scaler-wrapper.screen-shaking { animation-play-state: running; }
 #game-container.game-paused #scaler-wrapper.screen-shaking { animation-play-state: paused !important; }
-.bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-repeat: repeat-x; background-position: 0 bottom; will-change: background-position-x; }
+
+/* GPU Acceleration for background elements */
+.bg-layer { 
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    background-repeat: repeat-x; 
+    background-position: 0 bottom; 
+    will-change: background-position-x; 
+    transform: translateZ(0); 
+}
 #bg-layer-1 { background-image: url('img/bg-far.png'); z-index: 0; }
 #bg-layer-2 { background-image: url('img/bg-near.png'); z-index: 1; }
-#ground { width: 100%; height: 50px; position: absolute; bottom: 0; left: 0; z-index: 2; background-image: url('img/ground-tile.png'); background-repeat: repeat-x; background-position: 0 bottom; will-change: background-position-x; }
-#ceiling { width: 100%; height: 50px; position: absolute; top: 0; left: 0; z-index: 4; background-image: url('img/ceiling-tile.png'); background-repeat: repeat-x; background-position: 0 top; background-color: #888; will-change: background-position-x; }
-#start-wall { position: absolute; left: 0px; top: 50px; width: 150px; height: calc(100% - 100px); background-size: cover; background-position: center; background-repeat: no-repeat; z-index: 3; will-change: background-image, left, display; display: none; }
 
-#player { width: 120px; height: 120px; position: absolute; left: 100px; z-index: 5; background-repeat: no-repeat; background-position: 0 0; will-change: bottom, height, width, background-position, opacity, box-shadow, left, filter; box-shadow: none; filter: none; opacity: 1; animation: none; }
+#ground { 
+    width: 100%; height: 50px; 
+    position: absolute; bottom: 0; left: 0; 
+    z-index: 2; 
+    background-image: url('img/ground-tile.png'); 
+    background-repeat: repeat-x; background-position: 0 bottom; 
+    will-change: background-position-x; 
+    transform: translateZ(0);
+}
+#ceiling { 
+    width: 100%; height: 50px; 
+    position: absolute; top: 0; left: 0; 
+    z-index: 4; 
+    background-image: url('img/ceiling-tile.png'); 
+    background-repeat: repeat-x; background-position: 0 top; 
+    background-color: #888; 
+    will-change: background-position-x; 
+    transform: translateZ(0);
+}
+#start-wall { 
+    position: absolute; left: 0px; top: 50px; 
+    width: 150px; height: calc(100% - 100px); 
+    background-size: cover; background-position: center; background-repeat: no-repeat; 
+    z-index: 3; display: none; 
+    will-change: left, display; 
+    transform: translateZ(0);
+}
+
+/* Player optimized for transforms and performance */
+#player { 
+    width: 120px; height: 120px; 
+    position: absolute; left: 100px; 
+    z-index: 5; 
+    background-repeat: no-repeat; background-position: 0 0; 
+    box-shadow: none; filter: none; opacity: 1; animation: none; 
+    will-change: bottom, background-position, opacity, filter; 
+    transform: translateZ(0);
+}
+
+/* Shadow updated to use transform logic for high performance */
 #player-shadow {
     position: absolute;
+    left: 0;   /* Set to 0, moved via JS transform */
+    bottom: 0; /* Set to 0, moved via JS transform */
     width: 70px;
     height: 15px;
     background-color: rgba(0, 0, 0, 0.35);
@@ -442,63 +483,77 @@ input:checked + .slider:before { transform: translateX(26px); }
     image-rendering: -webkit-optimize-contrast;
     -ms-interpolation-mode: nearest-neighbor;
     display: none;
-    will-change: transform, opacity, left, bottom;
+    will-change: transform, opacity;
 }
+
 #player.qhk-invincible-effect { filter: hue-rotate(calc(var(--hue-angle, 0) * 1deg)) saturate(2.5) brightness(1.15); }
 #player.char1 { background-image: url('img/raphael-run-sprite.png'); background-size: 1200px 120px; }
 #player.char2 { background-image: url('img/mick-run-sprite.png'); background-size: 1200px 120px; }
 #player.char3 { background-image: url('img/thibault-run-sprite.png'); background-size: 1200px 120px; }
 #player.char4 { background-image: url('img/simon-run-sprite.png'); background-size: 1200px 120px; }
+
 @keyframes run-cycle { 100% { background-position-x: -1200px; } }
 #player.running { animation: run-cycle 0.8s steps(10) infinite; }
 #player.jumping-up, #player.jumping-down { animation: none; background-size: 120px 120px; }
 #player.slide { height: 60px; animation: none; background-size: 120px 120px; }
 #player.crouching { height: 90px; animation: none; background-size: 120px 120px; }
 #player.boosting { box-shadow: 0px 0px 25px 10px rgba(255, 220, 50, 0.9); animation: none; }
+
 @keyframes boost-cycle { 100% { background-position-x: -450px; } }
 #player.boosting-anim { background-size: 450px 150px; width: 150px; height: 150px; animation: boost-cycle 0.4s steps(3) infinite; }
+
 @keyframes flash-opacity { 0%, 100% { opacity: 1; } 50% { opacity: 0.1; } }
 #player.flashing { animation: flash-opacity 0.2s linear 5; }
 #player.running.flashing { animation: run-cycle 0.8s steps(10) infinite, flash-opacity 0.2s linear 5; }
-.explosion { width: 120px; height: 120px; position: absolute; z-index: 11; background-image: url('img/explosion-sprite.png'); background-size: 480px 120px; background-repeat: no-repeat; pointer-events: none; animation: explosion-anim 0.5s steps(4) forwards; }
+
+/* Particles and Items */
+.explosion { width: 120px; height: 120px; position: absolute; z-index: 11; background-image: url('img/explosion-sprite.png'); background-size: 480px 120px; background-repeat: no-repeat; pointer-events: none; animation: explosion-anim 0.5s steps(4) forwards; transform: translateZ(0); }
 @keyframes explosion-anim { 100% { background-position-x: -480px; } }
-.debris-particle { position: absolute; background-color: #795548; z-index: 6; pointer-events: none; border-radius: 50%; opacity: 0.9; will-change: transform, opacity; }
-.smoke-plume { position: absolute; width: 100px; height: 100px; background-image: url('img/smoke-plume.png'); background-size: contain; background-repeat: no-repeat; z-index: 8; opacity: 0.8; pointer-events: none; animation: smoke-fade-out 1s ease-out forwards; will-change: opacity, transform; }
+
+.debris-particle { position: absolute; background-color: #795548; z-index: 6; pointer-events: none; border-radius: 50%; opacity: 0.9; will-change: transform, opacity; transform: translateZ(0); }
+.smoke-plume { position: absolute; width: 100px; height: 100px; background-image: url('img/smoke-plume.png'); background-size: contain; background-repeat: no-repeat; z-index: 8; opacity: 0.8; pointer-events: none; animation: smoke-fade-out 1s ease-out forwards; will-change: opacity, transform; transform: translateZ(0); }
 @keyframes smoke-fade-out { 0% { opacity: 0.8; transform: scale(0.5) translateY(0px); } 50% { opacity: 0.6; transform: scale(1.2) translateY(-20px); } 100% { opacity: 0; transform: scale(1.8) translateY(-40px); } }
-.obstacle { position: absolute; z-index: 4; will-change: left, background-image; background-size: contain; background-repeat: no-repeat; background-position: center bottom; }
+
+.obstacle { position: absolute; z-index: 4; will-change: left; background-size: contain; background-repeat: no-repeat; background-position: center bottom; transform: translateZ(0); }
 .obstacle.tall { bottom: 50px; }
 .obstacle.short { bottom: 50px; }
 .obstacle.high { background-position: center top; }
-.thrown-bottle { position: absolute; width: 60px; height: 60px; background-image: url('img/thrown-bottle-sprite.png'); background-size: 300px 60px; background-repeat: no-repeat; z-index: 5; will-change: left, top, background-position-x; animation: bottle-fly 0.5s steps(5) infinite; }
+
+.thrown-bottle { position: absolute; width: 60px; height: 60px; background-image: url('img/thrown-bottle-sprite.png'); background-size: 300px 60px; background-repeat: no-repeat; z-index: 5; will-change: left, background-position-x; animation: bottle-fly 0.5s steps(5) infinite; transform: translateZ(0); }
 @keyframes bottle-fly { 100% { background-position-x: -300px; } }
-.beer { width: 50px; height: 50px; position: absolute; bottom: 90px; z-index: 5; will-change: left, transform; background-image: url('img/beer-sprite-10.png'); background-repeat: no-repeat; background-size: 500px 50px; animation: beer-spin 1.0s steps(10) infinite, bob 1.5s ease-in-out infinite; }
+
+.beer { width: 50px; height: 50px; position: absolute; bottom: 90px; z-index: 5; will-change: left, transform; background-image: url('img/beer-sprite-10.png'); background-repeat: no-repeat; background-size: 500px 50px; animation: beer-spin 1.0s steps(10) infinite, bob 1.5s ease-in-out infinite; transform: translateZ(0); }
 @keyframes beer-spin { 100% { background-position-x: -500px; } }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-.kiwi { width: 35px; height: 35px; background-image: url('img/kiwi.png'); background-size: contain; background-repeat: no-repeat; position: absolute; bottom: 110px; z-index: 5; will-change: left, transform; animation: bob 1.5s ease-in-out infinite; }
-.qhk-logo { width: 45px; height: 45px; background-image: url('img/qhk-logo.png'); background-size: contain; background-repeat: no-repeat; position: absolute; bottom: 120px; z-index: 5; will-change: left, transform, filter; animation: bob 1.3s ease-in-out infinite, item-rainbow-cycle 2s linear infinite; }
+
+.kiwi { width: 35px; height: 35px; background-image: url('img/kiwi.png'); background-size: contain; background-repeat: no-repeat; position: absolute; bottom: 110px; z-index: 5; will-change: left, transform; animation: bob 1.5s ease-in-out infinite; transform: translateZ(0); }
+.qhk-logo { width: 45px; height: 45px; background-image: url('img/qhk-logo.png'); background-size: contain; background-repeat: no-repeat; position: absolute; bottom: 120px; z-index: 5; will-change: left, transform, filter; animation: bob 1.3s ease-in-out infinite, item-rainbow-cycle 2s linear infinite; transform: translateZ(0); }
 @keyframes item-rainbow-cycle { 0% { filter: hue-rotate(0deg) saturate(2.5) brightness(1.15); } 100% { filter: hue-rotate(360deg) saturate(2.5) brightness(1.15); } }
-.boost-coin { width: 30px; height: 30px; position: absolute; z-index: 5; will-change: left, bottom; background-image: url('img/coin.png'); background-size: contain; background-repeat: no-repeat; animation: bob 1.8s ease-in-out infinite; }
-.boost-particle { position: absolute; width: 4px; height: 4px; background-color: #FFD700; z-index: 4; pointer-events: none; opacity: 0.9; will-change: transform, opacity; }
+.boost-coin { width: 30px; height: 30px; position: absolute; z-index: 5; will-change: left; background-image: url('img/coin.png'); background-size: contain; background-repeat: no-repeat; animation: bob 1.8s ease-in-out infinite; transform: translateZ(0); }
+.boost-particle { position: absolute; width: 4px; height: 4px; background-color: #FFD700; z-index: 4; pointer-events: none; opacity: 0.9; will-change: transform, opacity; transform: translateZ(0); }
+
 #scaler-wrapper.screen-shaking { animation: shake 0.15s linear infinite; }
 @keyframes shake { 0%, 100% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(2px, 1px) rotate(-0.2deg); } 50% { transform: translate(-1px, -2px) rotate(0.1deg); } 75% { transform: translate(1px, -1px) rotate(0.2deg); } }
+
+/* UI */
 #ui-top-bar { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; z-index: 6; }
 #score-board { order: 1; font-family: "VT323", monospace; font-size: 2em; color: white; text-shadow: 2px 2px 0px black; letter-spacing: 1px; }
 #heart-container { order: 2; display: flex; gap: 5px; margin-right: 10px; }
 .heart { width: 25px; height: 25px; background-image: url('img/heart-full.png'); background-size: contain; background-repeat: no-repeat; opacity: 1; transition: opacity 0.3s ease-out, background-image 0.3s ease-out; }
 .heart.empty { background-image: url('img/heart-empty.png'); opacity: 0.5; }
+
 #power-gauge-container {
     position: absolute;
-    /* bottom: 15px; */ /* Remove or comment out this line */
-    top: 55px;      /* Add this line - positions it 55px from the top */
-    right: 15px;    /* This can remain as is for right alignment */
+    top: 55px;      
+    right: 15px;    
     width: 90px;
     height: 45px;
     background-color: rgba(0, 0, 0, 0.6);
     border: 2px solid white;
     border-radius: 8px;
     overflow: hidden;
-    cursor: default; /* Changes to pointer when full, handled by JS/CSS classes */
-    z-index: 6; /* Keep z-index to ensure it's above background elements */
+    cursor: default; 
+    z-index: 6; 
     transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
     display: flex;
     justify-content: center;
@@ -507,18 +562,21 @@ input:checked + .slider:before { transform: translateX(26px); }
 }
 #power-gauge-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background-color: #ffcc00; transition: height 0.2s ease-out; border-radius: 0 0 6px 6px; z-index: 1; }
 #power-gauge-text { position: relative; z-index: 2; font-family: "Orbitron", sans-serif; font-size: 1.1em; font-weight: 600; color: white; text-shadow: 1px 1px 2px black; pointer-events: none; transition: color 0.3s, transform 0.1s; text-transform: uppercase; letter-spacing: 1px; }
+
 @keyframes pulse-boost-ready { 0% { box-shadow: 0 0 4px 1px rgba(255, 204, 0, 0.7); border-color: #ffcc00; } 50% { box-shadow: 0 0 10px 4px rgba(255, 102, 0, 1); border-color: #ff6600; } 100% { box-shadow: 0 0 4px 1px rgba(255, 204, 0, 0.7); border-color: #ffcc00; } }
 #power-gauge-container.full { cursor: pointer; border-color: #ffcc00; background-color: rgba(50, 50, 50, 0.7); animation: pulse-boost-ready 1.0s infinite ease-in-out; }
 #power-gauge-container.full #power-gauge-fill { height: 100%; background-color: #ffdd44; border-radius: 6px; }
 #power-gauge-container.full #power-gauge-text { color: #000; text-shadow: none; }
 #power-gauge-container:active { transform: translateY(1px) scale(0.98); }
 #power-gauge-container.full:active #power-gauge-text { transform: translateY(1px); }
+
 #pause-button { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 11; padding: 0; width: 30px; height: 30px; color: white; background-color: rgba(0, 0, 0, 0.5); border: 1px solid white; border-radius: 5px; cursor: pointer; transition: background-color 0.2s, transform 0.1s ease-out; display: flex; justify-content: center; align-items: center; gap: 5px; outline: none; -webkit-tap-highlight-color: transparent; }
 #pause-button:hover { background-color: rgba(50, 50, 50, 0.7); }
 #pause-button:active { transform: translateX(-50%) scale(0.95); }
 .pause-icon-bar { display: block; width: 4px; height: 14px; background-color: white; transition: all 0.2s ease-out; }
 #pause-button.paused .pause-icon-bar { width: 0; height: 0; background-color: transparent; border-style: solid; border-width: 7px 0 7px 12px; border-color: transparent transparent transparent white; margin: 0; transform: translateX(2px); flex-shrink: 0; }
 #pause-button.paused .pause-icon-bar:nth-child(2) { display: none; }
+
 #pause-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: "Orbitron", sans-serif; z-index: 10; pointer-events: auto; }
 #pause-menu-buttons { display: flex; flex-direction: column; align-items: center; gap: 20px; }
 .pause-buttons-row { display: flex; gap: 20px; }
@@ -530,6 +588,7 @@ input:checked + .slider:before { transform: translateX(26px); }
 #resume-button { background-color: #28a745; }
 #resume-button:hover { background-color: #218838; }
 #countdown-display { font-size: 4em; font-weight: 900; text-shadow: 2px 2px 6px black; }
+
 #game-over-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; z-index: 10; }
 #game-over-screen h2 { font-size: 3em; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
 #game-over-screen p { font-size: 1.6em; margin: 8px 0; letter-spacing: 1px; }
@@ -541,6 +600,7 @@ input:checked + .slider:before { transform: translateX(26px); }
 #change-char-button { background-color: #007bff; }
 #change-char-button:hover { background-color: #0069d9; }
 #restart-button:active, #change-char-button:active { transform: scale(0.96); }
+
 #confirmation-dialog { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.75); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box; }
 .dialog-content { background-color: #fff; color: #333; padding: 25px 30px; border-radius: 8px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 400px; width: 90%; }
 #confirmation-message { font-family: "VT323", monospace; font-size: 1.4em; margin-bottom: 25px; line-height: 1.6; }
@@ -551,6 +611,7 @@ input:checked + .slider:before { transform: translateX(26px); }
 .dialog-button.confirm:hover { background-color: #c82333; }
 .dialog-button.cancel { background-color: #6c757d; }
 .dialog-button.cancel:hover { background-color: #5a6268; }
+
 .debug-hitbox { position: absolute; z-index: 99; pointer-events: none; box-sizing: border-box; display: none; }
 .obstacle-debug { border: 1px solid darkgreen; background-color: rgba(0, 255, 0, 0.2); }
 .player-debug { border: 1px solid red; background-color: rgba(255, 0, 0, 0.2); }

@@ -2,17 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- Optimized viewport for gaming -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Quart d'Heure Kiwi Run</title>
+    
+    <!-- Preconnect to Font Servers -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=VT323&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css">
+
+    <!-- --- PRELOAD CRITICAL IMAGES TO STOP FLASHING --- -->
+    <!-- Adjust these paths if your images are elsewhere -->
+    <link rel="preload" as="image" href="img/home-screen-1920x1080.png">
+    <link rel="preload" as="image" href="img/char-select-screen-bg.png">
+    <link rel="preload" as="image" href="img/bg-far.png">
+    <link rel="preload" as="image" href="img/bg-near.png">
+    <link rel="preload" as="image" href="img/ground-tile.png">
+    <link rel="preload" as="image" href="img/ceiling-tile.png">
+    <link rel="preload" as="image" href="img/wall-texture-solid.png">
+    <!-- Preload at least the default character's sprites -->
+    <link rel="preload" as="image" href="img/raphael-run-sprite.png">
+    <link rel="preload" as="image" href="img/raphael-jump-up.png">
+    <link rel="preload" as="image" href="img/raphael-jump-down.png">
+    <!-- ----------------------------------------------------- -->
+
+    <!-- Web App Metas -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
+<!-- Splash Screen: Crucial for hiding initial asset loading -->
 <div id="splash-screen">
     <!-- Optional: <img src="img/your-logo-for-splash.png" alt="Loading..." /> -->
     <div id="splash-button-container">
@@ -20,42 +42,44 @@
     </div>
 </div>
 
-    <!-- Audio Elements -->
-    <audio id="background-music" loop preload="auto">
-        <source src="audio/quart-dheure-kiwi-theme.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
-    <audio id="invincibility-music" loop preload="auto">
-        <source src="audio/invincibility-music.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
-    <audio id="menu-music" loop preload="auto">
-        <source src="audio/menu-theme.mp3" type="audio/mpeg"> <!-- Ensure this path is correct -->
-        Your browser does not support the audio element.
-    </audio>
-    <audio id="sfx-jump" preload="auto"><source src="audio/jump-sfx.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-beer" preload="auto"><source src="audio/beer-collect-sfx.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-kiwi" preload="auto"><source src="audio/kiwi-collect-sfx.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-hit" preload="auto"><source src="audio/hit-sfx.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-boost" preload="auto"><source src="audio/boost-activate-sfx.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-game-over" preload="auto"><source src="audio/game-over-sfx.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-wall-break" preload="auto"><source src="audio/wall-break-sfx.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-slide" preload="auto"><source src="audio/slide-sfx.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-coin" preload="auto"><source src="audio/coin.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-footstep-1" preload="auto"><source src="audio/footstep-sfx-1.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-footstep-2" preload="auto"><source src="audio/footstep-sfx-2.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-footstep-3" preload="auto"><source src="audio/footstep-sfx-3.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-footstep-4" preload="auto"><source src="audio/footstep-sfx-4.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-button-click" preload="auto"><source src="audio/button-click-sfx.mp3" type="audio/mpeg"></audio>
-    <audio id="sfx-char-select-confirm" preload="auto"><source src="audio/char-select-confirm-sfx.mp3" type="audio/mpeg"></audio>
-    <!-- End Audio Elements -->
+    <!-- --- AUDIO ELEMENTS OVERHAUL --- -->
+    <!-- Changed most preload="auto" to "metadata" or "none" to prevent network clogging on mobile -->
+    <div id="audio-container" style="display: none;">
+        <!-- Music: Metadata allows knowing duration without downloading the whole file immediately -->
+        <audio id="background-music" loop preload="metadata"><source src="audio/quart-dheure-kiwi-theme.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
+        <audio id="invincibility-music" loop preload="metadata"><source src="audio/invincibility-music.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
+        <audio id="menu-music" loop preload="metadata"><source src="audio/menu-theme.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
+        
+        <!-- SFX: Preload "none". JS should load these before the gameplay starts. -->
+        <audio id="sfx-jump" preload="none"><source src="audio/jump-sfx.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-beer" preload="none"><source src="audio/beer-collect-sfx.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-kiwi" preload="none"><source src="audio/kiwi-collect-sfx.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-hit" preload="none"><source src="audio/hit-sfx.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-boost" preload="none"><source src="audio/boost-activate-sfx.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-game-over" preload="none"><source src="audio/game-over-sfx.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-wall-break" preload="none"><source src="audio/wall-break-sfx.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-slide" preload="none"><source src="audio/slide-sfx.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-coin" preload="none"><source src="audio/coin.mp3" type="audio/mpeg"></audio>
+        
+        <!-- Footsteps need to be ready fast, metadata is okay -->
+        <audio id="sfx-footstep-1" preload="metadata"><source src="audio/footstep-sfx-1.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-footstep-2" preload="metadata"><source src="audio/footstep-sfx-2.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-footstep-3" preload="metadata"><source src="audio/footstep-sfx-3.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-footstep-4" preload="metadata"><source src="audio/footstep-sfx-4.mp3" type="audio/mpeg"></audio>
+        <!-- UI Clicks might be needed early, metadata is okay -->
+        <audio id="sfx-button-click" preload="metadata"><source src="audio/button-click-sfx.mp3" type="audio/mpeg"></audio>
+        <audio id="sfx-char-select-confirm" preload="metadata"><source src="audio/char-select-confirm-sfx.mp3" type="audio/mpeg"></audio>
+    </div>
+    <!-- --- END AUDIO ELEMENTS --- -->
 
-    <div id="rotate-prompt" class="hidden"> <!-- Initially hidden, JS/CSS will manage -->
+    <div id="rotate-prompt" class="hidden">
         <p>Veuillez faire pivoter votre appareil en mode paysage.</p>
     </div>
 
-    <div id="page-rotator"> <!-- This contains scaler-wrapper -->
-        <div id="scaler-wrapper"> <!-- This contains all game screens -->
+    <!-- Main Game Wrapper -->
+    <div id="page-rotator">
+        <div id="scaler-wrapper">
+            <!-- Screens -->
             <div id="home-screen" class="hidden">
                 <button id="home-start-image-button" class="home-image-button" aria-label="Start Game"></button>
                 <button id="home-menu-image-button" class="home-image-button" aria-label="Open Menu"></button>
@@ -76,31 +100,39 @@
             <div id="character-selection-screen" class="hidden">
                 <button id="char-select-back-home-button" aria-label="Back to Home"></button>
                 <p class="high-score-display">High Score: <span id="char-select-high-score">0</span></p>
-                <div class="character-slot-container" data-char="char1" aria-label="Select Raphaël"><div class="char-sprite-animation"></div></div>
-                <div class="character-slot-container" data-char="char2" aria-label="Select Mick"><div class="char-sprite-animation"></div></div>
-                <div class="character-slot-container" data-char="char3" aria-label="Select Thibault"><div class="char-sprite-animation"></div></div>
-                <div class="character-slot-container" data-char="char4" aria-label="Select Simon"><div class="char-sprite-animation"></div></div>
+                <!-- Added touch-action: none to prevent browser scrolling interference -->
+                <div class="character-slot-container" data-char="char1" aria-label="Select Raphaël" style="touch-action: none;"><div class="char-sprite-animation"></div></div>
+                <div class="character-slot-container" data-char="char2" aria-label="Select Mick" style="touch-action: none;"><div class="char-sprite-animation"></div></div>
+                <div class="character-slot-container" data-char="char3" aria-label="Select Thibault" style="touch-action: none;"><div class="char-sprite-animation"></div></div>
+                <div class="character-slot-container" data-char="char4" aria-label="Select Simon" style="touch-action: none;"><div class="char-sprite-animation"></div></div>
                 <div id="char-select-screen-overlay" class="hidden"></div>
                 <p id="loading-message" class="hidden">Loading assets...</p>
             </div>
 
+            <!-- Game Elements: These must be promoted to GPU layers in CSS -->
             <div id="game-container" class="hidden">
-                <div id="ceiling"></div>
-                <div id="bg-layer-1" class="bg-layer"></div>
-                <div id="bg-layer-2" class="bg-layer"></div>
+                <!-- Ceiling should also have will-change -->
+                <div id="ceiling" style="will-change: background-position-x;"></div>
+                <!-- Ensure background layers use transform in CSS for movement -->
+                <div id="bg-layer-1" class="bg-layer" style="will-change: background-position-x;"></div>
+                <div id="bg-layer-2" class="bg-layer" style="will-change: background-position-x;"></div>
                 <div id="start-wall"></div>
                 <div id="ui-top-bar">
                     <div id="heart-container"></div>
                     <div id="score-board">SCORE: <span id="score">0</span></div>
                 </div>
                 <div id="power-gauge-container">
-                    <div id="power-gauge-fill"></div>
+                    <div id="power-gauge-fill" style="will-change: height;"></div>
                     <span id="power-gauge-text">BOOST</span>
                 </div>
-                <div id="ground"></div>
-                <div id="player"></div>
-                <div id="player-shadow"></div>
-                <div id="player-hitbox-debug" class="debug-hitbox player-debug"></div>
+                <!-- Ground needs will-change -->
+                <div id="ground" style="will-change: background-position-x;"></div>
+                <!-- Player needs will-change for smooth jumping/running -->
+                <div id="player" style="will-change: bottom, transform, opacity, filter;"></div>
+                <!-- Shadow needs will-change for transform -->
+                <div id="player-shadow" style="will-change: transform, opacity;"></div>
+                
+                <div id="player-hitbox-debug" class="debug-hitbox player-debug" style="display: none;"></div>
                 <button id="pause-button" title="Pause/Resume"><span class="pause-icon-bar"></span><span class="pause-icon-bar"></span></button>
                 <div id="pause-overlay" class="hidden">
                     <div id="pause-menu-buttons">
@@ -132,9 +164,10 @@
                     </div>
                 </div>
             </div>
-        </div> <!-- End scaler-wrapper -->
-    </div> <!-- End page-rotator -->
-    <!-- <script src="cordova.js"></script> -->
-    <script src="script.js"></script>
+        </div>
+    </div>
+    
+    <!-- Load script with 'defer' so HTML parses first -->
+    <script src="script.js" defer></script>
 </body>
 </html>

@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resumeButton = document.getElementById('resume-button');
     const pauseMenuButtonsContainer = document.getElementById('pause-menu-buttons');
     const pauseHomeButton = document.getElementById('pause-home-button');
-	const backgroundMusic = document.getElementById('background-music');
+    const backgroundMusic = document.getElementById('background-music');
     const invincibilityMusic = document.getElementById('invincibility-music');
     const menuMusic = document.getElementById('menu-music');
     const sfxJump = document.getElementById('sfx-jump');
@@ -74,6 +74,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmNoButton = document.getElementById('confirm-no-button');
 
     const allScreens = [homeScreen, characterSelectionScreen, gameContainer, settingsMenuScreen];
+
+    // --- NEW FRAME RATE LOCK VARIABLES ---
+    const TARGET_FPS = 60;
+    const TIME_STEP = 1000 / TARGET_FPS; // ~16.66ms per physics frame
+    let timeAccumulator = 0;
+    // -------------------------------------
 
     let score = 0, gameSpeed = 5, originalGameSpeed = 5, scoreMultiplier = 1, playerLives = 3;
     let gameOver = true, selectedCharacterClass = 'char1', currentPlayerState = 'idle', playerDY = 0;
@@ -137,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const BOOST_PARTICLE_TRAVEL_DISTANCE_X_CONST = 50, BOOST_PARTICLE_TRAVEL_DISTANCE_Y_CONST = 30;
     const BOOST_PARTICLE_MIN_DURATION_CONST = 500, BOOST_PARTICLE_MAX_DURATION_CONST = 1000, SCORE_INCREMENT_PER_SECOND_CONST = 10;
     const POINTS_PER_BEER_CONST = 50, VERTICAL_SPAWN_OFFSET_CONST = -10, THROWN_BOTTLE_WIDTH_CONST = 60, THROWN_BOTTLE_HEIGHT_CONST = 60;
-    const THROWN_BOTTLE_SPEED_X_FACTOR_CONST = 1.2, BASE_BOTTLE_INTERVAL_MS_CONST = 4000, MIN_BOTTLE_INTERVAL_SECONDS_CONST = 2.5;
+    const THROWN_BOTTLE_SPEED_X_FACTOR_CONST = 1.5, BASE_BOTTLE_INTERVAL_MS_CONST = 4000, MIN_BOTTLE_INTERVAL_SECONDS_CONST = 2.5;
     const BOTTLE_SPAWN_CHANCE_CONST = 0.35, BOTTLE_VERTICAL_MARGIN_CONST = 10, BOTTLE_SPAWN_SENSITIVITY_CONST = 0.7;
     const MUSIC_ON_KEY_CONST = 'htmlRunnerMusicOn', SFX_ON_KEY_CONST = 'htmlRunnerSfxOn';
     const PLAYER_ANIM_START_X_CONST = -120, PLAYER_ANIM_TARGET_X_CONST = playerLeftPosition_CONST, PLAYER_ANIM_START_Y_OFFSET_CONST = 150;
@@ -195,13 +201,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const getRandomElement_FN = (arr) => { if (!Array.isArray(arr) || arr.length === 0) { return null; } return arr[Math.floor(Math.random() * arr.length)]; };
     function getHighScore_FN() { const storedScore = localStorage.getItem(HIGH_SCORE_KEY_CONST); return storedScore ? parseInt(storedScore, 10) : 0; }
     function preloadImages_FN(urls, callback) {
-        // console.log("Preloading images:", urls); // Can be too verbose, uncomment if needed
         let loadedCount = 0; let totalImages = urls.length;
-        if (totalImages === 0) { /* console.log("No images to preload."); */ if (callback) callback(); return; }
+        if (totalImages === 0) { if (callback) callback(); return; }
         urls.forEach((url) => {
-            if (!url) { loadedCount++; if (loadedCount === totalImages && callback) { /* console.log("Preloading complete (skipped a null URL)."); */ callback(); } return; }
+            if (!url) { loadedCount++; if (loadedCount === totalImages && callback) { callback(); } return; }
             const img = new Image();
-            img.onload = () => { loadedCount++; /* console.log(`Loaded: ${url} (${loadedCount}/${totalImages})`); */ if (loadedCount === totalImages && callback) { console.log("All images preloaded successfully."); callback(); } };
+            img.onload = () => { loadedCount++; if (loadedCount === totalImages && callback) { console.log("All images preloaded successfully."); callback(); } };
             img.onerror = (e) => { console.error(`Preloading: FAILED to load image: ${url}`, e); loadedCount++; if (loadedCount === totalImages && callback) { console.log("Preloading complete (with errors)."); callback(); } };
             img.src = url;
         });
@@ -211,29 +216,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveAudioSettings_FN() { localStorage.setItem(MUSIC_ON_KEY_CONST, JSON.stringify(isMusicOn)); localStorage.setItem(SFX_ON_KEY_CONST, JSON.stringify(isSfxOn)); }
 
     function playActiveMusic_FN() {
-        if (!isMusicOn || !activeMusicTrack) {
-            // console.log("playActiveMusic_FN: Music off or no active track.");
-            return;
-        }
+        if (!isMusicOn || !activeMusicTrack) return;
         const allMusicTracks = [backgroundMusic, invincibilityMusic, menuMusic].filter(Boolean);
         allMusicTracks.forEach(track => {
-            if (track !== activeMusicTrack && track && !track.paused) {
-                track.pause();
-                // console.log(`playActiveMusic_FN: Paused other track ${track.id}`);
-            }
+            if (track !== activeMusicTrack && track && !track.paused) track.pause();
         });
 
         if (activeMusicTrack.paused) {
-            if (activeMusicTrack.currentTime > 0 && !activeMusicTrack.ended) {
-                // console.log(`playActiveMusic_FN: Resuming ${activeMusicTrack.id} from ${activeMusicTrack.currentTime}.`);
-            } else {
-                activeMusicTrack.currentTime = 0;
-                // console.log(`playActiveMusic_FN: Starting ${activeMusicTrack.id} from beginning.`);
-            }
+            if (activeMusicTrack.currentTime <= 0 || activeMusicTrack.ended) activeMusicTrack.currentTime = 0;
             activeMusicTrack.volume = musicVolume;
             activeMusicTrack.play().catch(error => console.warn(`Music play/resume failed for ${activeMusicTrack.id}:`, error));
-        } else {
-            // console.log(`playActiveMusic_FN: Track ${activeMusicTrack.id} is already playing or not ready.`);
         }
     }
     function pauseActiveMusic_FN() { if (activeMusicTrack && !activeMusicTrack.paused) activeMusicTrack.pause(); }
@@ -252,42 +244,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadAndDisplayHighScore_FN() { const highScore = getHighScore_FN(); if (charSelectHighScoreDisplay && characterSelectionScreen && !characterSelectionScreen.classList.contains('hidden')) { charSelectHighScoreDisplay.textContent = highScore; } if (gameOverHighScoreDisplay && gameOverScreen && !gameOverScreen.classList.contains('hidden')) { gameOverHighScoreDisplay.textContent = highScore; } }
 
     function showScreen_FN(screenToShow) {
-        if (!screenToShow || !screenToShow.id) { console.warn("showScreen called with invalid screen:", screenToShow); return; }
-        // console.log(`showScreen_FN attempting to show: ${screenToShow.id}. Current activeMusicTrack: ${activeMusicTrack ? activeMusicTrack.id : 'null'}`);
+        if (!screenToShow || !screenToShow.id) return;
         const isGameScreen = screenToShow.id === 'game-container';
 
         allScreens.forEach(screen => {
-            if (screen && screen.id !== screenToShow.id && !screen.classList.contains('hidden')) {
-                screen.classList.add('hidden');
-            }
+            if (screen && screen.id !== screenToShow.id && !screen.classList.contains('hidden')) screen.classList.add('hidden');
         });
-        if (!isGameScreen && gameOverScreen && !gameOverScreen.classList.contains('hidden')) {
-            gameOverScreen.classList.add('hidden');
-        }
-        if (screenToShow.classList.contains('hidden')) {
-            screenToShow.classList.remove('hidden');
-        }
-        // console.log(`${screenToShow.id} classList after hidden toggle: ${screenToShow.classList}`);
-
+        if (!isGameScreen && gameOverScreen && !gameOverScreen.classList.contains('hidden')) gameOverScreen.classList.add('hidden');
+        if (screenToShow.classList.contains('hidden')) screenToShow.classList.remove('hidden');
 
         if (!isGameScreen) {
             if (menuMusic) {
-                if (activeMusicTrack !== menuMusic) {
-                    // console.log(`showScreen_FN: Menu screen. Active track was ${activeMusicTrack ? activeMusicTrack.id : 'null'}. Switching to menuMusic.`);
-                    stopAllMusic_FN();
-                    activeMusicTrack = menuMusic;
-                    playActiveMusic_FN();
-                } else if (menuMusic.paused && isMusicOn) {
-                    // console.log(`showScreen_FN: Menu screen. menuMusic is active track and paused. Resuming.`);
-                    playActiveMusic_FN();
-                }
+                if (activeMusicTrack !== menuMusic) { stopAllMusic_FN(); activeMusicTrack = menuMusic; playActiveMusic_FN(); }
+                else if (menuMusic.paused && isMusicOn) playActiveMusic_FN();
             }
         } else if (isGameScreen) {
-             // console.log(`showScreen_FN: Game screen. Music will be handled by game start/resume logic.`);
-            if (activeMusicTrack === menuMusic && menuMusic && !menuMusic.paused) {
-                //  console.log(`showScreen_FN: Game screen. Explicitly pausing menuMusic.`);
-                 menuMusic.pause();
-            }
+            if (activeMusicTrack === menuMusic && menuMusic && !menuMusic.paused) menuMusic.pause();
         }
 
         if (screenToShow.id === 'settings-menu-screen') { updateSettingsBackgroundImage_FN(); }
@@ -329,82 +301,56 @@ document.addEventListener('DOMContentLoaded', () => {
         ...coreUiImagesToPreload_FN,
         CHAR_SELECT_BG_IMG_PATH_CONST,
         ...Object.values(IDLE_SPRITE_INFO).map(info => info.path),
-		'img/your-splash-image-landscape.png', // <<< CORRECTED: Preload actual landscape splash
-		'img/your-splash-image-portrait.png'  // <<< ADDED: Preload actual portrait splash
+        'img/your-splash-image-landscape.png', 
+        'img/your-splash-image-portrait.png'  
     ].filter(url => url);
 
-function initializeApp() {
-    console.log("initializeApp CALLED");
-    const splashStartButton = document.getElementById('splash-start-button'); // Get button early
+    function initializeApp() {
+        console.log("initializeApp CALLED");
+        const splashStartButton = document.getElementById('splash-start-button');
 
-    if (!splashScreen || !pageRotator || !scalerWrapper || !rotatePrompt || !splashStartButton) {
-        console.error("CRITICAL ERROR: Essential layout elements missing. Splash:", !!splashScreen, "PageRotator:", !!pageRotator, "Scaler:", !!scalerWrapper, "RotatePrompt:", !!rotatePrompt, "SplashButton:", !!splashStartButton);
-        document.body.innerHTML = "<p style='color:white; text-align:center; padding-top: 50px; font-size: 20px;'>Error: Game files are corrupted or missing. Please reinstall.</p>";
-        return;
-    }
-
-    splashScreen.classList.remove('hidden');
-    document.body.classList.add('splash-active');
-    console.log("Splash screen shown with button.");
-
-    function handleSplashInteraction() {
-        // Remove listeners from the button itself
-        splashStartButton.removeEventListener('click', handleSplashInteraction);
-        // if using touchend: splashStartButton.removeEventListener('touchend', handleSplashInteraction);
-
-        console.log("Splash button interaction detected.");
-
-        if (splashScreen) splashScreen.classList.add('hidden');
-        document.body.classList.remove('splash-active');
-        console.log("Splash screen hidden after interaction.");
-
-        if (pageRotator) pageRotator.style.display = 'block';
-        resizeGame_FN();
-
-        loadAudioSettings_FN();
-        updateSettingsBackgroundImage_FN();
-
-        if (menuMusic) {
-            activeMusicTrack = menuMusic;
-            if (activeMusicTrack.volume !== musicVolume) {
-                activeMusicTrack.volume = musicVolume;
-            }
-            if (isMusicOn) {
-                console.log("Attempting to play menuMusic directly after splash button tap (if music is on).");
-                playActiveMusic_FN();
-            } else {
-                console.log("Music is set to OFF, not playing after splash.");
-            }
+        if (!splashScreen || !pageRotator || !scalerWrapper || !rotatePrompt || !splashStartButton) {
+            console.error("CRITICAL ERROR: Essential layout elements missing.");
+            document.body.innerHTML = "<p style='color:white; text-align:center; padding-top: 50px; font-size: 20px;'>Error: Game files are corrupted or missing. Please reinstall.</p>";
+            return;
         }
 
-        preloadImages_FN(initialImagesToPreload, () => {
-            console.log("Preloading finished in initializeApp.");
+        splashScreen.classList.remove('hidden');
+        document.body.classList.add('splash-active');
 
-            if (scalerWrapper.style.display === 'flex') { // landscape
-                console.log("Layout is landscape-ready, showing home screen.");
-                showScreen_FN(homeScreen);
-            } else if (rotatePrompt.style.display === 'flex') { // portrait
-                console.log("Layout is portrait, rotate prompt should be visible.");
-            } else {
-                 console.warn("Unexpected layout state after splash...");
-                 if (pageRotator.style.display === 'block') showScreen_FN(homeScreen);
+        function handleSplashInteraction() {
+            splashStartButton.removeEventListener('click', handleSplashInteraction);
+            
+            // Force load core audio files now that user has interacted
+            [sfxJump, sfxBeer, sfxKiwi, sfxHit, sfxBoost, sfxSlide, sfxCoin].forEach(sfx => {
+                if (sfx) sfx.load();
+            });
+
+            if (splashScreen) splashScreen.classList.add('hidden');
+            document.body.classList.remove('splash-active');
+
+            if (pageRotator) pageRotator.style.display = 'block';
+            resizeGame_FN();
+
+            loadAudioSettings_FN();
+            updateSettingsBackgroundImage_FN();
+
+            if (menuMusic) {
+                activeMusicTrack = menuMusic;
+                if (activeMusicTrack.volume !== musicVolume) activeMusicTrack.volume = musicVolume;
+                if (isMusicOn) playActiveMusic_FN();
             }
 
-            hideConfirmationDialog_FN();
-            if(powerGaugeContainer) resetPowerGauge_FN();
-            if (startWall) { startWall.style.display = 'none'; startWall.style.left = '0px'; }
-        });
+            preloadImages_FN(initialImagesToPreload, () => {
+                if (scalerWrapper.style.display === 'flex') showScreen_FN(homeScreen);
+                hideConfirmationDialog_FN();
+                if(powerGaugeContainer) resetPowerGauge_FN();
+                if (startWall) { startWall.style.display = 'none'; startWall.style.left = '0px'; }
+            });
+        }
+        splashStartButton.addEventListener('click', handleSplashInteraction);
     }
-
-    // Add event listener to the button
-    splashStartButton.addEventListener('click', handleSplashInteraction);
-    // Consider 'touchend' for better responsiveness on touch devices if 'click' feels slow,
-    // but 'click' on buttons is usually fine and handles both mouse and touch.
-    // splashStartButton.addEventListener('touchend', handleSplashInteraction, { passive: true });
-
-}
     initializeApp();
-
 
     function addButtonClickListener_FN(buttonElement, actionCallback, sfx = sfxButtonClick) { if (buttonElement) { buttonElement.addEventListener('click', () => { playSoundEffect_FN(sfx); if (actionCallback) actionCallback(); }); } }
     addButtonClickListener_FN(homeStartImageButton, () => showScreen_FN(characterSelectionScreen));
@@ -412,10 +358,7 @@ function initializeApp() {
     addButtonClickListener_FN(settingsBackImageButton, () => showScreen_FN(homeScreen));
     addButtonClickListener_FN(settingsMusicToggleArea, () => { if (musicToggle) musicToggle.click(); });
     addButtonClickListener_FN(settingsSfxToggleArea, () => { if (sfxToggle) sfxToggle.click(); });
-    addButtonClickListener_FN(charSelectBackHomeButton, () => {
-        console.log("Character Select Back to Home button clicked.");
-        showScreen_FN(homeScreen); // Ensures menu music continues if already playing
-    });
+    addButtonClickListener_FN(charSelectBackHomeButton, () => showScreen_FN(homeScreen));
     addButtonClickListener_FN(restartButton, () => { if(isPaused) { isPaused=false; isCountingDown=false; } stopAllMusic_FN(); stopHueAnimationLoop_FN(); if(player) { player.classList.remove('qhk-invincible-effect'); player.style.filter = ''; } clearAllIntervalsAndFrames_FN(); clearGameElements_FN('.obstacle'); clearGameElements_FN('.beer'); clearGameElements_FN('.kiwi'); clearGameElements_FN('.qhk-logo'); clearGameElements_FN('.boost-coin'); clearGameElements_FN('.thrown-bottle'); clearGameElements_FN('.explosion'); clearGameElements_FN('.obstacle-debug'); clearGameElements_FN('.boost-particle'); clearGameElements_FN('.debris-particle'); clearGameElements_FN('.smoke-plume'); if (playerDebugElement) playerDebugElement.style.display = 'none'; resetPowerGauge_FN(); startGame_FN(); });
     addButtonClickListener_FN(changeCharButton, () => { if(isPaused) { isPaused=false; isCountingDown=false; } goHomeAndReset_FN(); showScreen_FN(characterSelectionScreen); });
     addButtonClickListener_FN(resumeButton, togglePause_FN);
@@ -428,7 +371,6 @@ function initializeApp() {
 
     characterSlotContainers.forEach(slot => {
         slot.addEventListener('click', () => {
-            // console.log("Slot clicked:", slot.dataset.char);
             if (loadingMessage && loadingMessage.classList.contains('hidden')) {
                 playSoundEffect_FN(sfxCharSelectConfirm);
                 selectedCharacterClass = slot.dataset.char;
@@ -438,7 +380,7 @@ function initializeApp() {
                 if(loadingMessage) loadingMessage.classList.remove('hidden');
                 setTimeout(() => {
                     const charGameSprites = spritePaths_CONST[selectedCharacterClass];
-                    if (!charGameSprites) { if (charSelectScreenOverlay) charSelectScreenOverlay.classList.add('hidden'); characterSlotContainers.forEach(s => { s.style.pointerEvents = 'auto'; s.classList.remove('selected-char-punchout'); }); if(loadingMessage) loadingMessage.classList.add('hidden'); console.error("Character game sprites not found for:", selectedCharacterClass); return;}
+                    if (!charGameSprites) { if (charSelectScreenOverlay) charSelectScreenOverlay.classList.add('hidden'); characterSlotContainers.forEach(s => { s.style.pointerEvents = 'auto'; s.classList.remove('selected-char-punchout'); }); if(loadingMessage) loadingMessage.classList.add('hidden'); return;}
                     const imagesToLoadForGame = [...essentialImagesForGame_CONST];
                     Object.values(charGameSprites).forEach(spriteUrl => { if (spriteUrl) imagesToLoadForGame.push(spriteUrl); });
                     Object.values(obstacleImages_CONST).forEach(imgArray => { imgArray.forEach(imgUrl => { if(imgUrl && !imagesToLoadForGame.includes(imgUrl)) imagesToLoadForGame.push(imgUrl); }); });
@@ -446,100 +388,72 @@ function initializeApp() {
                         if(loadingMessage) loadingMessage.classList.add('hidden');
                         if (charSelectScreenOverlay) charSelectScreenOverlay.classList.add('hidden');
                         characterSlotContainers.forEach(s => { s.style.pointerEvents = 'auto'; s.classList.remove('selected-char-punchout'); });
-                        stopAllMusic_FN(); // Stop menu music before starting game
+                        stopAllMusic_FN();
                         showScreen_FN(gameContainer);
                         startGame_FN();
                     });
                 }, 300);
-            } else { console.log("Loading message is visible or loadingMessage element not found. Click ignored.", loadingMessage); }
+            }
         });
     });
 
     document.addEventListener('deviceready', onDeviceReady, false);
     function onDeviceReady() {
-        console.log('Device is ready. Applying fullscreen and status bar settings.');
-        if (window.StatusBar) { console.log('StatusBar plugin found.'); StatusBar.overlaysWebView(true); StatusBar.hide(); } else { console.warn('StatusBar plugin not found.'); }
-        if (window.AndroidFullScreen) { console.log('AndroidFullScreen plugin found.'); AndroidFullScreen.isImmersiveModeSupported( () => { AndroidFullScreen.immersiveMode( () => { console.log('Successfully entered immersive mode.'); resizeGame_FN(); }, (error) => { console.error('Error entering immersive mode: ', error); } ); }, () => { console.log('Immersive mode is NOT supported.'); resizeGame_FN(); } );
-        } else { console.warn('AndroidFullScreen plugin not found.'); resizeGame_FN(); }
-        if (window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.ScreenOrientation) { Capacitor.Plugins.ScreenOrientation.lock({ orientation: 'landscape-primary' }).then(() => console.log("Capacitor: Orientation locked")).catch(e => console.error("Capacitor: Orientation lock failed", e));
-        } else if (screen && screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape-primary').then(() => console.log("Web API: Orientation locked")).catch(e => console.warn("Web API: Orientation lock failed", e)); }
-        setTimeout(resizeGame_FN, 200); // Give plugins time to apply before final resize
+        if (window.StatusBar) { StatusBar.overlaysWebView(true); StatusBar.hide(); }
+        if (window.AndroidFullScreen) { AndroidFullScreen.isImmersiveModeSupported( () => { AndroidFullScreen.immersiveMode( () => { resizeGame_FN(); }, (error) => {} ); }, () => { resizeGame_FN(); } ); } else { resizeGame_FN(); }
+        if (window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.ScreenOrientation) { Capacitor.Plugins.ScreenOrientation.lock({ orientation: 'landscape-primary' }).catch(e => {});
+        } else if (screen && screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape-primary').catch(e => {}); }
+        setTimeout(resizeGame_FN, 200);
     }
     window.addEventListener('resize', resizeGame_FN);
     document.addEventListener('keydown', handleKeyDown_FN);
     document.addEventListener('keyup', handleKeyUp_FN);
     if (gameContainer) { gameContainer.addEventListener('touchstart', handleTouchStart_FN, { passive: false }); gameContainer.addEventListener('touchmove', handleTouchMove_FN, { passive: false }); gameContainer.addEventListener('touchend', handleTouchEnd_FN, { passive: false }); gameContainer.addEventListener('touchcancel', handleTouchEnd_FN, { passive: false }); }
 
-function resizeGame_FN() {
-    console.log("resizeGame_FN called by event:", event ? event.type : 'initial call'); // Keep this for debugging
-    const vpW = window.innerWidth;
-    const vpH = window.innerHeight;
-    const isLandscape = vpW > vpH;
+    function resizeGame_FN() {
+        const vpW = window.innerWidth;
+        const vpH = window.innerHeight;
+        const isLandscape = vpW > vpH;
 
-    if (splashScreen && !splashScreen.classList.contains('hidden')) {
-        return;
-    }
-    if (!pageRotator || !scalerWrapper || !rotatePrompt || !homeScreen) { // Added !homeScreen check
-        console.error("resizeGame_FN: Critical layout element missing.");
-        return;
-    }
+        if (splashScreen && !splashScreen.classList.contains('hidden')) return;
+        if (!pageRotator || !scalerWrapper || !rotatePrompt || !homeScreen) return;
 
-    let wasInPortrait = rotatePrompt.style.display === 'flex' || !rotatePrompt.classList.contains('hidden');
+        let wasInPortrait = rotatePrompt.style.display === 'flex' || !rotatePrompt.classList.contains('hidden');
 
-    if (isLandscape) {
-        if (pageRotator) pageRotator.style.display = 'block';
-        if (scalerWrapper) scalerWrapper.style.display = 'flex';
-        if (rotatePrompt) {
-            rotatePrompt.style.display = 'none';
-            rotatePrompt.classList.add('hidden');
+        if (isLandscape) {
+            if (pageRotator) pageRotator.style.display = 'block';
+            if (scalerWrapper) scalerWrapper.style.display = 'flex';
+            if (rotatePrompt) { rotatePrompt.style.display = 'none'; rotatePrompt.classList.add('hidden'); }
+
+            const isGameScreenVisible = gameContainer && !gameContainer.classList.contains('hidden');
+            const isCharacterSelectVisible = characterSelectionScreen && !characterSelectionScreen.classList.contains('hidden');
+            const isSettingsVisible = settingsMenuScreen && !settingsMenuScreen.classList.contains('hidden');
+            const isHomeVisible = homeScreen && !homeScreen.classList.contains('hidden');
+
+            if (wasInPortrait && !isGameScreenVisible && !isCharacterSelectVisible && !isSettingsVisible && !isHomeVisible) showScreen_FN(homeScreen);
+            else if (!isHomeVisible && !isGameScreenVisible && !isCharacterSelectVisible && !isSettingsVisible) showScreen_FN(homeScreen);
+        } else {
+            if (pageRotator) pageRotator.style.display = 'none';
+            if (scalerWrapper) scalerWrapper.style.display = 'none';
+            if (rotatePrompt) { rotatePrompt.style.display = 'flex'; rotatePrompt.classList.remove('hidden'); }
         }
 
-        // --- ADD THIS LOGIC ---
-        // If we just switched from portrait to landscape,
-        // and no game-specific screen is currently visible, show the home screen.
-        const isGameScreenVisible = gameContainer && !gameContainer.classList.contains('hidden');
-        const isCharacterSelectVisible = characterSelectionScreen && !characterSelectionScreen.classList.contains('hidden');
-        const isSettingsVisible = settingsMenuScreen && !settingsMenuScreen.classList.contains('hidden');
-        const isHomeVisible = homeScreen && !homeScreen.classList.contains('hidden');
-
-        if (wasInPortrait && !isGameScreenVisible && !isCharacterSelectVisible && !isSettingsVisible && !isHomeVisible) {
-            console.log("resizeGame_FN: Switched to landscape from portrait, showing home screen.");
-            showScreen_FN(homeScreen);
-        } else if (!isHomeVisible && !isGameScreenVisible && !isCharacterSelectVisible && !isSettingsVisible) {
-            // Fallback: If somehow no screen is visible in landscape, show home.
-            // This might happen if the page loaded in landscape but initializeApp didn't catch it.
-            console.log("resizeGame_FN: Landscape, but no screen visible. Forcing home screen.");
-            showScreen_FN(homeScreen);
-        }
-        // --- END OF ADDED LOGIC ---
-
-    } else { // Portrait
-        if (pageRotator) pageRotator.style.display = 'none';
-        if (scalerWrapper) scalerWrapper.style.display = 'none';
-        if (rotatePrompt) {
-            rotatePrompt.style.display = 'flex';
-            rotatePrompt.classList.remove('hidden');
+        if (scalerWrapper.style.display === 'flex') {
+            if (homeScreen && !homeScreen.classList.contains('hidden')) { const s = Math.min(vpW / HOME_SCREEN_DESIGN_WIDTH_CONST, vpH / HOME_SCREEN_DESIGN_HEIGHT_CONST); homeScreen.style.transform = `scale(${s})`; }
+            else if (homeScreen) { homeScreen.style.transform = 'scale(1)'; }
+            if (settingsMenuScreen && !settingsMenuScreen.classList.contains('hidden')) { const s = Math.min(vpW / HOME_SCREEN_DESIGN_WIDTH_CONST, vpH / HOME_SCREEN_DESIGN_HEIGHT_CONST); settingsMenuScreen.style.transform = `scale(${s})`; }
+            else if (settingsMenuScreen) { settingsMenuScreen.style.transform = 'scale(1)'; }
+            if (characterSelectionScreen && !characterSelectionScreen.classList.contains('hidden')) { const s = Math.min(vpW / CHAR_SELECT_DESIGN_WIDTH_CONST, vpH / CHAR_SELECT_DESIGN_HEIGHT_CONST); characterSelectionScreen.style.transform = `scale(${s})`; }
+            else if (characterSelectionScreen) { characterSelectionScreen.style.transform = 'scale(1)'; }
+            if (gameContainer && !gameContainer.classList.contains('hidden')) { currentScale = Math.min(vpW / GAME_DESIGN_WIDTH_CONST, vpH / GAME_DESIGN_HEIGHT_CONST); gameContainer.style.transform = `scale(${currentScale})`; }
+            else if (gameContainer) { gameContainer.style.transform = 'scale(1)'; }
+        } else {
+            if (homeScreen) homeScreen.style.transform = 'scale(1)';
+            if (settingsMenuScreen) settingsMenuScreen.style.transform = 'scale(1)';
+            if (characterSelectionScreen) characterSelectionScreen.style.transform = 'scale(1)';
+            if (gameContainer) gameContainer.style.transform = 'scale(1)';
         }
     }
-
-    // Scaling logic (remains the same)
-    if (scalerWrapper.style.display === 'flex') {
-        if (homeScreen && !homeScreen.classList.contains('hidden')) { const s = Math.min(vpW / HOME_SCREEN_DESIGN_WIDTH_CONST, vpH / HOME_SCREEN_DESIGN_HEIGHT_CONST); homeScreen.style.transform = `scale(${s})`; }
-        else if (homeScreen) { homeScreen.style.transform = 'scale(1)'; }
-        // ... (rest of scaling logic for other screens) ...
-        if (settingsMenuScreen && !settingsMenuScreen.classList.contains('hidden')) { const s = Math.min(vpW / HOME_SCREEN_DESIGN_WIDTH_CONST, vpH / HOME_SCREEN_DESIGN_HEIGHT_CONST); settingsMenuScreen.style.transform = `scale(${s})`; }
-        else if (settingsMenuScreen) { settingsMenuScreen.style.transform = 'scale(1)'; }
-        if (characterSelectionScreen && !characterSelectionScreen.classList.contains('hidden')) { const s = Math.min(vpW / CHAR_SELECT_DESIGN_WIDTH_CONST, vpH / CHAR_SELECT_DESIGN_HEIGHT_CONST); characterSelectionScreen.style.transform = `scale(${s})`; }
-        else if (characterSelectionScreen) { characterSelectionScreen.style.transform = 'scale(1)'; }
-        if (gameContainer && !gameContainer.classList.contains('hidden')) { currentScale = Math.min(vpW / GAME_DESIGN_WIDTH_CONST, vpH / GAME_DESIGN_HEIGHT_CONST); gameContainer.style.transform = `scale(${currentScale})`; }
-        else if (gameContainer) { gameContainer.style.transform = 'scale(1)'; }
-    } else {
-        if (homeScreen) homeScreen.style.transform = 'scale(1)';
-        if (settingsMenuScreen) settingsMenuScreen.style.transform = 'scale(1)';
-        if (characterSelectionScreen) characterSelectionScreen.style.transform = 'scale(1)';
-        if (gameContainer) gameContainer.style.transform = 'scale(1)';
-    }
-}
 
     function handleKeyDown_FN(e) { if (isPaused || isCountingDown || (gameOverScreen && !gameOverScreen.classList.contains('hidden')) || gameOver || isInStartingAnimation) return; if (isBoosting) { if (touchActionIdentifier === null) { if (e.code === 'ArrowUp' || e.key === 'ArrowUp') { e.preventDefault(); boostVelocityY = BOOST_VERTICAL_SPEED_CONST; } else if (e.code === 'ArrowDown' || e.key === 'ArrowDown') { e.preventDefault(); boostVelocityY = -BOOST_VERTICAL_SPEED_CONST; } } } else { if (e.code === 'Escape' || e.code === 'KeyP') { playSoundEffect_FN(sfxButtonClick); togglePause_FN(); return; } if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.key === 'Shift') && powerGaugeValue >= POWER_GAUGE_MAX_CONST) { e.preventDefault(); activateBoost_FN(); return; } if ((e.code === 'Space' || e.code === 'ArrowUp' || e.key === ' ' || e.key === 'ArrowUp')) { e.preventDefault(); if (!isJumping && !isSliding && !isBoosting) jump_FN(); if (!isSliding && !isBoosting) isHoldingJump = true; } else if ((e.code === 'ArrowDown' || e.key === 'ArrowDown')) { e.preventDefault(); if (!isSliding && !isBoosting) { if (isJumping) slamDown_FN(); else startSlide_FN(); } } } }
     function handleKeyUp_FN(e) { if (isPaused || isCountingDown || gameOver || isInStartingAnimation) return; if (isBoosting) { if (((e.code === 'ArrowUp' || e.key === 'ArrowUp') && boostVelocityY > 0) || ((e.code === 'ArrowDown' || e.key === 'ArrowDown') && boostVelocityY < 0)) boostVelocityY = 0; } else { if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === ' ' || e.key === 'ArrowUp') isHoldingJump = false; else if (e.code === 'ArrowDown' || e.key === 'ArrowDown') { if (isSliding || currentPlayerState === 'crouching') stopSlide_FN(); } } }
@@ -591,7 +505,12 @@ function resizeGame_FN() {
         clearGameElements_FN('.debris-particle'); clearGameElements_FN('.smoke-plume');
         if(playerDebugElement) playerDebugElement.style.display = 'none';
         if(scalerWrapper) scalerWrapper.classList.remove('screen-shaking');
-        timeSinceLastParticle = 0; clearAllIntervalsAndFrames_FN(); lastTimestamp = 0;
+        timeSinceLastParticle = 0; clearAllIntervalsAndFrames_FN(); 
+        
+        // Reset Time Accumulator for fixed physics loop
+        timeAccumulator = 0; 
+        lastTimestamp = 0;
+        
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(startingAnimationLoop_FN);
         resizeGame_FN(); if(gameContainer) gameContainer.classList.remove('game-paused');
@@ -599,7 +518,7 @@ function resizeGame_FN() {
 
     function startingAnimationLoop_FN(timestamp) {
         if (!player) return;
-        if (!isInStartingAnimation) { if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null; lastTimestamp = 0; animationFrameId = requestAnimationFrame(gameLoop_FN); return; }
+        if (!isInStartingAnimation) { if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null; lastTimestamp = 0; timeAccumulator = 0; animationFrameId = requestAnimationFrame(gameLoop_FN); return; }
         if (!lastTimestamp) { lastTimestamp = timestamp; if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = requestAnimationFrame(startingAnimationLoop_FN); return; }
         const deltaTime = (timestamp - lastTimestamp) / 1000;
         lastTimestamp = timestamp;
@@ -625,6 +544,7 @@ function resizeGame_FN() {
             if (startWall && startWall.style.backgroundImage.includes('solid') && !wallTextureSwapped) { startWall.style.backgroundImage = "url('img/wall-texture-hole.png')"; wallTextureSwapped = true; }
             if (activeMusicTrack === backgroundMusic) { playActiveMusic_FN(); } else if (menuMusic && activeMusicTrack === menuMusic && !menuMusic.paused) { menuMusic.pause(); menuMusic.currentTime = 0; activeMusicTrack = backgroundMusic; playActiveMusic_FN(); }
             lastTimestamp = 0;
+            timeAccumulator = 0; // Reset for actual gameplay loop
             if (playerShadow) playerShadow.style.display = 'block';
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             animationFrameId = null; animationFrameId = requestAnimationFrame(gameLoop_FN);
@@ -652,8 +572,380 @@ function resizeGame_FN() {
     function spawnParticle_FN() { if (gameOver || !gameContainer || !gameContainer.offsetParent || !isBoosting || !player) return; const p=document.createElement('div');p.classList.add('boost-particle');const pW=parseFloat(player.style.width)||playerBoostWidth_CONST,pH=parseFloat(player.style.height)||playerBoostHeight_CONST,pL=parseFloat(player.style.left),pB=parseFloat(player.style.bottom);const sX=pL-(pW*.1),sY=pB+(pH/2),sTop=GAME_DESIGN_HEIGHT_CONST-sY;const oX=(Math.random()-.5)*BOOST_PARTICLE_SPAWN_SPREAD_X_CONST,oY=(Math.random()-.5)*BOOST_PARTICLE_SPAWN_SPREAD_Y_CONST;p.style.left=`${sX+oX}px`;p.style.top=`${sTop+oY}px`;gameContainer.appendChild(p);const tX=-(Math.random()*BOOST_PARTICLE_TRAVEL_DISTANCE_X_CONST+10),tY=(Math.random()-.5)*BOOST_PARTICLE_TRAVEL_DISTANCE_Y_CONST*2,dur=Math.random()*(BOOST_PARTICLE_MAX_DURATION_CONST-BOOST_PARTICLE_MIN_DURATION_CONST)+BOOST_PARTICLE_MIN_DURATION_CONST,iS=Math.random()*.5+.8,fS=Math.random()*.3+.1;p.animate([{transform:`translate(0,0)scale(${iS})`,opacity:.9},{transform:`translate(${tX}px,${tY}px)scale(${fS})`,opacity:0}],{duration:dur,easing:'ease-out'}).onfinish=()=>{if(p.parentNode)p.remove();};}
     function startHueAnimationLoop_FN() { if (!player) return; if (hueAnimationId) cancelAnimationFrame(hueAnimationId); hueAngle = 0; function animateHue() { if (!isQhkInvincible || isPaused || isCountingDown || !player) { stopHueAnimationLoop_FN(); return; } hueAngle = (hueAngle + 5) % 360; player.style.setProperty('--hue-angle', hueAngle.toString()); hueAnimationId = requestAnimationFrame(animateHue); } hueAnimationId = requestAnimationFrame(animateHue); }
     function stopHueAnimationLoop_FN() { if (hueAnimationId) { cancelAnimationFrame(hueAnimationId); hueAnimationId = null; } }
-    function togglePause_FN() { if (gameOver || isInStartingAnimation || (confirmationDialog && !confirmationDialog.classList.contains('hidden'))) return; if (isCountingDown) { clearInterval(countdownTimer); countdownTimer = null; isCountingDown = false; isPaused = true; if(pauseMenuButtonsContainer)pauseMenuButtonsContainer.classList.remove('hidden'); if(pauseMessageElement)pauseMessageElement.classList.remove('hidden'); if(countdownDisplay)countdownDisplay.classList.add('hidden'); if(pauseButton)pauseButton.classList.add('paused'); if(gameContainer)gameContainer.classList.add('game-paused'); return; } isPaused = !isPaused; if (isPaused) { pauseStartTime = Date.now(); if(pauseButton)pauseButton.classList.add('paused'); if(pauseOverlay)pauseOverlay.classList.remove('hidden'); if(pauseMenuButtonsContainer)pauseMenuButtonsContainer.classList.remove('hidden'); if(pauseMessageElement)pauseMessageElement.classList.remove('hidden'); if(countdownDisplay)countdownDisplay.classList.add('hidden'); if(gameContainer)gameContainer.classList.add('game-paused'); pauseActiveMusic_FN(); if (hueAnimationId) cancelAnimationFrame(hueAnimationId); if (sfxSlide && !sfxSlide.paused && currentPlayerState === 'sliding') { slideSfxWasPlayingBeforePause = true; sfxSlide.pause(); } else slideSfxWasPlayingBeforePause = false; if (boostTimer) { boostTimeRemaining = BOOST_DURATION_CONST - (pauseStartTime - boostStartTime); if (boostTimeRemaining < 0) boostTimeRemaining = 0; clearTimeout(boostTimer); boostTimer = null; } if (postHitInvincibilityTimer) { postHitInvincibilityTimeRemaining = POST_HIT_INVINCIBILITY_DURATION_CONST - (pauseStartTime - postHitInvincibilityStartTime); if (postHitInvincibilityTimeRemaining < 0) postHitInvincibilityTimeRemaining = 0; clearTimeout(postHitInvincibilityTimer); postHitInvincibilityTimer = null; } if (qhkInvincibilityTimer) { qhkInvincibilityTimeRemaining = QHK_INVINCIBILITY_DURATION_CONST - (pauseStartTime - qhkInvincibilityStartTime); if (qhkInvincibilityTimeRemaining < 0) qhkInvincibilityTimeRemaining = 0; clearTimeout(qhkInvincibilityTimer); qhkInvincibilityTimer = null; } if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } if(isBoosting && scalerWrapper) scalerWrapper.classList.remove('screen-shaking'); } else { isCountingDown = true; if(pauseButton)pauseButton.classList.remove('paused'); if(pauseMenuButtonsContainer)pauseMenuButtonsContainer.classList.add('hidden'); if(pauseMessageElement)pauseMessageElement.classList.add('hidden'); if(countdownDisplay)countdownDisplay.classList.remove('hidden'); if(pauseOverlay && pauseOverlay.classList.contains('hidden'))pauseOverlay.classList.remove('hidden'); countdownValue = 3; if(countdownDisplay)countdownDisplay.textContent = countdownValue; if(gameContainer)gameContainer.classList.add('game-paused'); countdownTimer = setInterval(() => { countdownValue--; if(countdownDisplay)countdownDisplay.textContent = countdownValue; if (countdownValue <= 0) { clearInterval(countdownTimer); countdownTimer = null; isCountingDown = false; if(pauseOverlay)pauseOverlay.classList.add('hidden'); if(gameContainer)gameContainer.classList.remove('game-paused'); resumeActiveMusic_FN(); if (isQhkInvincible && !hueAnimationId && player) startHueAnimationLoop_FN(); if (slideSfxWasPlayingBeforePause && isSfxOn && currentPlayerState === 'sliding' && sfxSlide) playSoundEffect_FN(sfxSlide, true); slideSfxWasPlayingBeforePause = false; if (boostTimeRemaining > 0 && isBoosting) { boostStartTime = Date.now(); boostTimer = setTimeout(deactivateBoost_FN, boostTimeRemaining); if(scalerWrapper)scalerWrapper.classList.add('screen-shaking'); } boostTimeRemaining = 0; if (postHitInvincibilityTimeRemaining > 0 && isPostHitInvincible) { postHitInvincibilityStartTime = Date.now(); postHitInvincibilityTimer = setTimeout(() => { isPostHitInvincible = false; if(!isQhkInvincible && player)player.classList.remove('flashing'); postHitInvincibilityTimeRemaining = 0; if(player) setPlayerState_FN(currentPlayerState); }, postHitInvincibilityTimeRemaining); } postHitInvincibilityTimeRemaining = 0; if (qhkInvincibilityTimeRemaining > 0 && isQhkInvincible) { qhkInvincibilityStartTime = Date.now(); qhkInvincibilityTimer = setTimeout(deactivateQhkInvincibility_FN, qhkInvincibilityTimeRemaining); } qhkInvincibilityTimeRemaining = 0; lastTimestamp = 0; if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = requestAnimationFrame(gameLoop_FN); } }, 500); } }
-    function gameLoop_FN(timestamp) { if (!player || !gameContainer) return; if (gameOver || isInStartingAnimation || isPaused || isCountingDown) { if (gameOver || isInStartingAnimation) { if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null; } return; } if (!lastTimestamp) { lastTimestamp = timestamp; if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = requestAnimationFrame(gameLoop_FN); return; } const deltaTime = (timestamp - lastTimestamp) / 1000; lastTimestamp = timestamp; const dt = Math.min(deltaTime, 0.1); if (dt <= 0) { if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = requestAnimationFrame(gameLoop_FN); return; } updateScore_FN(dt); if (!gameOver && !isBoosting) { originalGameSpeed += SPEED_INCREASE_PER_SECOND_CONST * dt; originalGameSpeed = Math.min(originalGameSpeed, MAX_GAME_SPEED_CONST); } gameSpeed = isBoosting ? originalGameSpeed * BOOST_SPEED_MULTIPLIER_CONST : originalGameSpeed; const pixelsToMoveHorizontally = gameSpeed * 60 * dt; if (pixelsToMoveHorizontally > 0) { bg1PosX -= pixelsToMoveHorizontally * bg1ScrollFactor_CONST; bg2PosX -= pixelsToMoveHorizontally * bg2ScrollFactor_CONST; if (bg1PosX <= -bgImageWidth_CONST) bg1PosX += bgImageWidth_CONST; if (bg2PosX <= -bgImageWidth_CONST) bg2PosX += bgImageWidth_CONST; if(bgLayer1) bgLayer1.style.backgroundPositionX = `${bg1PosX}px`; if(bgLayer2) bgLayer2.style.backgroundPositionX = `${bg2PosX}px`; groundPosX -= pixelsToMoveHorizontally; ceilingPosX -= pixelsToMoveHorizontally; if (groundPosX <= -tileImageWidth_CONST) groundPosX += tileImageWidth_CONST; if (ceilingPosX <= -tileImageWidth_CONST) ceilingPosX += tileImageWidth_CONST; if(ground) ground.style.backgroundPositionX = `${groundPosX}px`; if(ceiling) ceiling.style.backgroundPositionX = `${ceilingPosX}px`; moveGameElements_FN('.obstacle', pixelsToMoveHorizontally); moveGameElements_FN('.beer', pixelsToMoveHorizontally); moveGameElements_FN('.kiwi', pixelsToMoveHorizontally); moveGameElements_FN('.qhk-logo', pixelsToMoveHorizontally); moveGameElements_FN('.boost-coin', pixelsToMoveHorizontally); moveGameElements_FN('.boost-particle', pixelsToMoveHorizontally); moveGameElements_FN('.debris-particle', pixelsToMoveHorizontally); moveGameElements_FN('.smoke-plume', pixelsToMoveHorizontally); moveGameElements_FN('.explosion', pixelsToMoveHorizontally); if (startWall && startWall.style.display !== 'none' && wallTextureSwapped) { let wallCurrentLeft = parseFloat(startWall.style.left); if (isNaN(wallCurrentLeft)) wallCurrentLeft = 0; wallCurrentLeft -= pixelsToMoveHorizontally; startWall.style.left = `${wallCurrentLeft}px`; const wallWidth = parseFloat(startWall.style.width) || 150; if (wallCurrentLeft + wallWidth < -20) startWall.style.display = 'none'; } const bottles = gameContainer.querySelectorAll('.thrown-bottle'); const bottleBaseSpeed = gameSpeed * 60 * dt; bottles.forEach(bottle => { let currentLeft = parseFloat(bottle.style.left); currentLeft -= bottleBaseSpeed * THROWN_BOTTLE_SPEED_X_FACTOR_CONST; bottle.style.left = `${currentLeft}px`; if (currentLeft + THROWN_BOTTLE_WIDTH_CONST < -10) { if (bottle.debugBox && bottle.debugBox.parentNode) bottle.debugBox.remove(); bottle.remove(); } }); } let currentBottom = parseFloat(player.style.bottom); let newBottom = currentBottom; if (isBoosting) { if (currentPlayerState !== 'boosting-anim') setPlayerState_FN('boosting-anim'); if (touchActionIdentifier !== null) { const difference = boostTargetY - currentBottom; newBottom = currentBottom + difference * BOOST_SMOOTH_FACTOR_CONST; if (Math.abs(difference) < 0.5) newBottom = boostTargetY; } else { if (boostVelocityY !== 0) { let boostMove = boostVelocityY * dt * 60; newBottom = currentBottom + boostMove; } } newBottom = Math.max(BOOST_MIN_BOTTOM_CONST, Math.min(newBottom, BOOST_MAX_BOTTOM_CONST)); player.style.bottom = newBottom + 'px'; timeSinceLastParticle += dt; if (timeSinceLastParticle >= PARTICLE_SPAWN_INTERVAL_CONST) { spawnParticle_FN(); timeSinceLastParticle = 0; } } else if (isJumping) { playerDY -= gravity_CONST * dt * 60; if (isHoldingJump && playerDY > 0) { playerDY += JUMP_HOLD_BOOST_CONST * dt * 60; } let verticalChange = playerDY * dt * 60; newBottom = currentBottom + verticalChange; const jumpCeiling = playerBaseBottom_CONST + MAX_JUMP_HEIGHT_CONST; if (newBottom >= jumpCeiling && playerDY > 0) { newBottom = jumpCeiling; playerDY = 0; } if (newBottom <= playerBaseBottom_CONST && playerDY <= 0) { newBottom = playerBaseBottom_CONST; player.style.bottom = `${newBottom}px`; isJumping = false; playerDY = 0; if (isSlammingDown) { isSlammingDown = false; isSliding = true; setPlayerState_FN('crouching'); slideEnterTimeout = setTimeout(() => { if (currentPlayerState === 'crouching' && isSliding) setPlayerState_FN('sliding'); slideEnterTimeout = null; }, CROUCH_TRANSITION_DURATION_CONST); } else { setPlayerState_FN('running'); if (sfxFootsteps.length > 0 && !isBoosting && !isSliding) { const randomFootstepSfx = getRandomElement_FN(sfxFootsteps); if (randomFootstepSfx) playSoundEffect_FN(randomFootstepSfx); timeSinceLastFootstep = 0; footstepSfxPlaying = true; } } } else { player.style.bottom = `${newBottom}px`; setPlayerState_FN(playerDY < JUMP_DOWN_THRESHOLD_CONST ? 'jumping-down' : 'jumping-up'); } } else if (isSliding || currentPlayerState === 'crouching') { if (currentBottom !== playerBaseBottom_CONST) player.style.bottom = `${playerBaseBottom_CONST}px`; } else { if (currentBottom !== playerBaseBottom_CONST) player.style.bottom = `${playerBaseBottom_CONST}px`; if (currentPlayerState !== 'running' && currentPlayerState !== 'idle' && !isPaused && !isCountingDown && !gameOver) { setPlayerState_FN('running'); } } if (!isJumping && !isBoosting && parseFloat(player.style.bottom) < playerBaseBottom_CONST ) { player.style.bottom = `${playerBaseBottom_CONST}px`; } if (playerShadow && player && player.style.display !== 'none' && !gameOver && !isPaused && !isCountingDown && !isInStartingAnimation) { const playerSpriteBottom = parseFloat(player.style.bottom); const playerLeft = parseFloat(player.style.left); const playerWidth = parseFloat(player.style.width) || playerWidth_CONST; playerShadow.style.left = `${playerLeft + (playerWidth / 2) - (SHADOW_BASE_WIDTH_CONST / 2)}px`; playerShadow.style.bottom = `${groundHeight_CONST - (SHADOW_BASE_HEIGHT_CONST / 2) + SHADOW_GROUND_OFFSET_Y_CONST}px`; let distanceFromPlayerBase = Math.max(0, playerSpriteBottom - playerBaseBottom_CONST); if (isBoosting) distanceFromPlayerBase = MAX_JUMP_HEIGHT_CONST * 1.5; let scale = 1 - (distanceFromPlayerBase / (MAX_JUMP_HEIGHT_CONST * 1.2)); scale = Math.max(SHADOW_MIN_SCALE_CONST, Math.min(1.0, scale)); const minOpacity = 0.15, maxOpacity = 0.35; let opacity = minOpacity + (scale - SHADOW_MIN_SCALE_CONST) * (maxOpacity - minOpacity) / (1.0 - SHADOW_MIN_SCALE_CONST); opacity = Math.max(minOpacity, Math.min(maxOpacity, opacity)); if (distanceFromPlayerBase > MAX_JUMP_HEIGHT_CONST * 1.1 || isBoosting || scale <= SHADOW_MIN_SCALE_CONST + 0.01) { playerShadow.style.display = 'none'; } else { playerShadow.style.display = 'block'; playerShadow.style.transform = `scale(${scale})`; playerShadow.style.opacity = opacity; } } else if (playerShadow) { playerShadow.style.display = 'none'; } if (sfxFootsteps.length > 0 && !isBoosting && !isJumping && !isSliding && currentPlayerState === 'running' && parseFloat(player.style.bottom) <= playerBaseBottom_CONST + 5 && !gameOver && !isPaused && !isCountingDown && !isInStartingAnimation) { timeSinceLastFootstep += dt; if (timeSinceLastFootstep >= FOOTSTEP_INTERVAL_CONST) { const randomFootstepSfx = getRandomElement_FN(sfxFootsteps); if (randomFootstepSfx) playSoundEffect_FN(randomFootstepSfx); timeSinceLastFootstep = 0; footstepSfxPlaying = true; } } else { if (currentPlayerState !== 'running' || isJumping || isSliding || isBoosting) { timeSinceLastFootstep = FOOTSTEP_INTERVAL_CONST; footstepSfxPlaying = false; } } if (isSpawningQhkCoinStream) { timeSinceLastQhkStreamCoin += dt; if (timeSinceLastQhkStreamCoin >= QHK_STREAM_COIN_SPAWN_INTERVAL_SECONDS_CONST) { spawnSingleQhkStreamCoin_FN(); timeSinceLastQhkStreamCoin = 0; } } if (DEBUG_HITBOXES_CONST && gameContainer.offsetParent !== null) { if (playerDebugElement) { const playerBaseLeft = parseFloat(player.style.left); const playerBaseBottomVal = parseFloat(player.style.bottom); const currentUnscaledPlayerHeight = parseFloat(player.style.height) || playerHeight_CONST; const currentUnscaledPlayerWidth = parseFloat(player.style.width) || playerWidth_CONST; const unscaledHitboxWidth = currentUnscaledPlayerWidth - 2 * HITBOX_HORIZONTAL_PADDING_CONST; const unscaledHitboxHeight = currentUnscaledPlayerHeight - 2 * HITBOX_VERTICAL_PADDING_CONST; const unscaledHitboxOffsetX = HITBOX_HORIZONTAL_PADDING_CONST; const unscaledHitboxOffsetY = HITBOX_VERTICAL_PADDING_CONST; const playerBaseTop = GAME_DESIGN_HEIGHT_CONST - playerBaseBottomVal - currentUnscaledPlayerHeight; const isValid = !(unscaledHitboxHeight <= 0 || unscaledHitboxWidth <= 0); playerDebugElement.style.top = `${playerBaseTop + unscaledHitboxOffsetY}px`; playerDebugElement.style.left = `${playerBaseLeft + unscaledHitboxOffsetX}px`; playerDebugElement.style.width = isValid ? `${unscaledHitboxWidth}px` : '0px'; playerDebugElement.style.height = isValid ? `${unscaledHitboxHeight}px` : '0px'; playerDebugElement.style.display = isValid ? 'block' : 'none'; } const gameElementsWithDebug = gameContainer.querySelectorAll('.obstacle, .thrown-bottle'); gameElementsWithDebug.forEach(element => { if (element.debugBox && element.debugBox.parentNode) { const baseLeft = parseFloat(element.style.left); let baseWidth, baseHeight, baseTopVal; if (element.classList.contains('obstacle')) { if (element.classList.contains('tall')) { baseWidth = tallObstacleWidth_CONST; baseHeight = tallObstacleHeight_CONST; } else if (element.classList.contains('short')) { baseWidth = shortObstacleWidth_CONST; baseHeight = shortObstacleHeight_CONST; } else if (element.classList.contains('high')) { baseWidth = highObstacleWidth_CONST; baseHeight = highObstacleHeight_CONST; } else { baseWidth = 50; baseHeight = 50; } if (element.classList.contains('high')) { baseTopVal = parseFloat(element.style.top) || CEILING_HEIGHT_CONST; } else { const baseBottomVal = parseFloat(element.style.bottom) || groundHeight_CONST; baseTopVal = GAME_DESIGN_HEIGHT_CONST - baseBottomVal - baseHeight;} } else if (element.classList.contains('thrown-bottle')) { baseWidth = THROWN_BOTTLE_WIDTH_CONST; baseHeight = THROWN_BOTTLE_HEIGHT_CONST; baseTopVal = parseFloat(element.style.top); } const isVisible = (baseWidth > 0 && baseHeight > 0 && baseLeft < GAME_DESIGN_WIDTH_CONST && baseLeft + baseWidth > 0 && baseTopVal !== null && baseTopVal + baseHeight > 0 && baseTopVal < GAME_DESIGN_HEIGHT_CONST); if (isVisible) { element.debugBox.style.top = `${baseTopVal}px`; element.debugBox.style.left = `${baseLeft}px`; element.debugBox.style.width = `${baseWidth}px`; element.debugBox.style.height = `${baseHeight}px`; element.debugBox.style.display = 'block'; } else { element.debugBox.style.display = 'none'; } } }); } else if (DEBUG_HITBOXES_CONST) { if(playerDebugElement) playerDebugElement.style.display = 'none'; const obstacleDebugs = gameContainer.querySelectorAll('.obstacle-debug'); obstacleDebugs.forEach(box => box.style.display = 'none'); } const playerRectForCollision = player.getBoundingClientRect(); if (!gameOver) { if (!isPostHitInvincible && !isQhkInvincible) { checkCollisions_FN('.obstacle', handleObstacleCollision_FN, playerRectForCollision); checkCollisions_FN('.thrown-bottle', handleBottleCollision_FN, playerRectForCollision); } else if (isBoosting) { checkCollisions_FN('.obstacle', handleObstacleCollision_FN, playerRectForCollision); checkCollisions_FN('.thrown-bottle', handleBottleCollision_FN, playerRectForCollision); } } if (!gameOver) { checkCollisions_FN('.beer', handleBeerCollision_FN, playerRectForCollision); checkCollisions_FN('.kiwi', handleKiwiCollision_FN, playerRectForCollision); checkCollisions_FN('.qhk-logo', handleQhkLogoCollision_FN, playerRectForCollision); checkCollisions_FN('.boost-coin', handleBoostCoinCollision_FN, playerRectForCollision); } if (!gameOver) { timeSinceLastObstacle += dt; let speedRatio = INITIAL_GAME_SPEED_CONST / gameSpeed; let adjustedSpeedRatio = Math.pow(speedRatio, OBSTACLE_SPAWN_SPEED_SENSITIVITY_CONST); let dynamicObstacleIntervalSeconds = (BASE_OBSTACLE_INTERVAL_MS_CONST / 1000) * adjustedSpeedRatio; currentObstacleIntervalSeconds = Math.max(MIN_OBSTACLE_INTERVAL_SECONDS_CONST, dynamicObstacleIntervalSeconds); if (timeSinceLastObstacle >= currentObstacleIntervalSeconds) { spawnObstacle_FN(); timeSinceLastObstacle = 0 - (Math.random() * 0.1); } timeSinceLastBeer += dt; if (timeSinceLastBeer >= currentBeerIntervalSeconds) { spawnBeer_FN(); timeSinceLastBeer = 0 - (Math.random() * 0.1); } timeSinceLastKiwiCheck += dt; if (timeSinceLastKiwiCheck >= currentKiwiIntervalSeconds) { trySpawnKiwi_FN(); timeSinceLastKiwiCheck = 0; } timeSinceLastQhkLogoCheck += dt; if (timeSinceLastQhkLogoCheck >= (QHK_LOGO_SPAWN_INTERVAL_CONST / 1000)) { trySpawnQhkLogo_FN(); timeSinceLastQhkLogoCheck = 0; } timeSinceLastBottle += dt; let bottleSpeedRatio = INITIAL_GAME_SPEED_CONST / gameSpeed; let bottleAdjustedSpeedRatio = Math.pow(bottleSpeedRatio, BOTTLE_SPAWN_SENSITIVITY_CONST); currentBottleIntervalSeconds = Math.max(MIN_BOTTLE_INTERVAL_SECONDS_CONST, (BASE_BOTTLE_INTERVAL_MS_CONST / 1000) * bottleAdjustedSpeedRatio); if (timeSinceLastBottle >= currentBottleIntervalSeconds) { if (Math.random() < BOTTLE_SPAWN_CHANCE_CONST) { spawnThrownBottle_FN(); } timeSinceLastBottle = 0; } if (isBoosting && !isQhkInvincible) { timeSinceLastBoostCoinSpawn += dt; const nextCoinSpawnDelay = Math.random() * (BOOST_COIN_SPAWN_INTERVAL_MAX_CONST - BOOST_COIN_SPAWN_INTERVAL_MIN_CONST) + BOOST_COIN_SPAWN_INTERVAL_MIN_CONST; if (timeSinceLastBoostCoinSpawn >= nextCoinSpawnDelay) { trySpawnBoostCoin_FN(); timeSinceLastBoostCoinSpawn = 0; } } } if (!gameOver) { if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = requestAnimationFrame(gameLoop_FN); } else { if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null; } }
+    
+    function togglePause_FN() { 
+        if (gameOver || isInStartingAnimation || (confirmationDialog && !confirmationDialog.classList.contains('hidden'))) return; 
+        if (isCountingDown) { clearInterval(countdownTimer); countdownTimer = null; isCountingDown = false; isPaused = true; if(pauseMenuButtonsContainer)pauseMenuButtonsContainer.classList.remove('hidden'); if(pauseMessageElement)pauseMessageElement.classList.remove('hidden'); if(countdownDisplay)countdownDisplay.classList.add('hidden'); if(pauseButton)pauseButton.classList.add('paused'); if(gameContainer)gameContainer.classList.add('game-paused'); return; } 
+        isPaused = !isPaused; 
+        if (isPaused) { 
+            pauseStartTime = Date.now(); if(pauseButton)pauseButton.classList.add('paused'); if(pauseOverlay)pauseOverlay.classList.remove('hidden'); if(pauseMenuButtonsContainer)pauseMenuButtonsContainer.classList.remove('hidden'); if(pauseMessageElement)pauseMessageElement.classList.remove('hidden'); if(countdownDisplay)countdownDisplay.classList.add('hidden'); if(gameContainer)gameContainer.classList.add('game-paused'); pauseActiveMusic_FN(); if (hueAnimationId) cancelAnimationFrame(hueAnimationId); if (sfxSlide && !sfxSlide.paused && currentPlayerState === 'sliding') { slideSfxWasPlayingBeforePause = true; sfxSlide.pause(); } else slideSfxWasPlayingBeforePause = false; if (boostTimer) { boostTimeRemaining = BOOST_DURATION_CONST - (pauseStartTime - boostStartTime); if (boostTimeRemaining < 0) boostTimeRemaining = 0; clearTimeout(boostTimer); boostTimer = null; } if (postHitInvincibilityTimer) { postHitInvincibilityTimeRemaining = POST_HIT_INVINCIBILITY_DURATION_CONST - (pauseStartTime - postHitInvincibilityStartTime); if (postHitInvincibilityTimeRemaining < 0) postHitInvincibilityTimeRemaining = 0; clearTimeout(postHitInvincibilityTimer); postHitInvincibilityTimer = null; } if (qhkInvincibilityTimer) { qhkInvincibilityTimeRemaining = QHK_INVINCIBILITY_DURATION_CONST - (pauseStartTime - qhkInvincibilityStartTime); if (qhkInvincibilityTimeRemaining < 0) qhkInvincibilityTimeRemaining = 0; clearTimeout(qhkInvincibilityTimer); qhkInvincibilityTimer = null; } if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; } if(isBoosting && scalerWrapper) scalerWrapper.classList.remove('screen-shaking'); 
+        } else { 
+            isCountingDown = true; if(pauseButton)pauseButton.classList.remove('paused'); if(pauseMenuButtonsContainer)pauseMenuButtonsContainer.classList.add('hidden'); if(pauseMessageElement)pauseMessageElement.classList.add('hidden'); if(countdownDisplay)countdownDisplay.classList.remove('hidden'); if(pauseOverlay && pauseOverlay.classList.contains('hidden'))pauseOverlay.classList.remove('hidden'); countdownValue = 3; if(countdownDisplay)countdownDisplay.textContent = countdownValue; if(gameContainer)gameContainer.classList.add('game-paused'); 
+            countdownTimer = setInterval(() => { 
+                countdownValue--; if(countdownDisplay)countdownDisplay.textContent = countdownValue; 
+                if (countdownValue <= 0) { 
+                    clearInterval(countdownTimer); countdownTimer = null; isCountingDown = false; if(pauseOverlay)pauseOverlay.classList.add('hidden'); if(gameContainer)gameContainer.classList.remove('game-paused'); resumeActiveMusic_FN(); if (isQhkInvincible && !hueAnimationId && player) startHueAnimationLoop_FN(); if (slideSfxWasPlayingBeforePause && isSfxOn && currentPlayerState === 'sliding' && sfxSlide) playSoundEffect_FN(sfxSlide, true); slideSfxWasPlayingBeforePause = false; if (boostTimeRemaining > 0 && isBoosting) { boostStartTime = Date.now(); boostTimer = setTimeout(deactivateBoost_FN, boostTimeRemaining); if(scalerWrapper)scalerWrapper.classList.add('screen-shaking'); } boostTimeRemaining = 0; if (postHitInvincibilityTimeRemaining > 0 && isPostHitInvincible) { postHitInvincibilityStartTime = Date.now(); postHitInvincibilityTimer = setTimeout(() => { isPostHitInvincible = false; if(!isQhkInvincible && player)player.classList.remove('flashing'); postHitInvincibilityTimeRemaining = 0; if(player) setPlayerState_FN(currentPlayerState); }, postHitInvincibilityTimeRemaining); } postHitInvincibilityTimeRemaining = 0; if (qhkInvincibilityTimeRemaining > 0 && isQhkInvincible) { qhkInvincibilityStartTime = Date.now(); qhkInvincibilityTimer = setTimeout(deactivateQhkInvincibility_FN, qhkInvincibilityTimeRemaining); } qhkInvincibilityTimeRemaining = 0; lastTimestamp = 0; timeAccumulator = 0; if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = requestAnimationFrame(gameLoop_FN); 
+                } 
+            }, 500); 
+        } 
+    }
+
+    // --- NEW FIXED TIMESTEP GAME LOOP ---
+    function gameLoop_FN(timestamp) { 
+        if (!player || !gameContainer) return; 
+        if (gameOver || isInStartingAnimation || isPaused || isCountingDown) { 
+            if (gameOver || isInStartingAnimation) { 
+                if (animationFrameId) cancelAnimationFrame(animationFrameId); 
+                animationFrameId = null; 
+            } 
+            return; 
+        } 
+        
+        if (!lastTimestamp) { 
+            lastTimestamp = timestamp; 
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); 
+            animationFrameId = requestAnimationFrame(gameLoop_FN); 
+            return; 
+        } 
+        
+        let frameTime = timestamp - lastTimestamp; 
+        lastTimestamp = timestamp; 
+        
+        // Cap frame time to prevent spiraling after lag or tab switch
+        if (frameTime > TIME_STEP * 4) {
+            frameTime = TIME_STEP * 4;
+        }
+        
+        timeAccumulator += frameTime; 
+        
+        // Physics Loop: Run logic at exactly 60 updates per second
+        while (timeAccumulator >= TIME_STEP) {
+            updateGamePhysics_FN(TIME_STEP / 1000); // Pass dt in seconds
+            timeAccumulator -= TIME_STEP;
+        }
+
+        // Render visual only things (Shadows, Hitboxes) after physics
+        renderGameVisuals_FN();
+
+        if (!gameOver) { 
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); 
+            animationFrameId = requestAnimationFrame(gameLoop_FN); 
+        } else { 
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); 
+            animationFrameId = null; 
+        } 
+    }
+
+    // --- PHYSICS AND DOM UPDATE ---
+    function updateGamePhysics_FN(dt) {
+        if (dt <= 0) return;
+
+        updateScore_FN(dt); 
+        
+        if (!gameOver && !isBoosting) { 
+            originalGameSpeed += SPEED_INCREASE_PER_SECOND_CONST * dt; 
+            originalGameSpeed = Math.min(originalGameSpeed, MAX_GAME_SPEED_CONST); 
+        } 
+        gameSpeed = isBoosting ? originalGameSpeed * BOOST_SPEED_MULTIPLIER_CONST : originalGameSpeed; 
+        
+        const pixelsToMoveHorizontally = gameSpeed * 60 * dt; 
+        
+        if (pixelsToMoveHorizontally > 0) { 
+            bg1PosX -= pixelsToMoveHorizontally * bg1ScrollFactor_CONST; 
+            bg2PosX -= pixelsToMoveHorizontally * bg2ScrollFactor_CONST; 
+            if (bg1PosX <= -bgImageWidth_CONST) bg1PosX += bgImageWidth_CONST; 
+            if (bg2PosX <= -bgImageWidth_CONST) bg2PosX += bgImageWidth_CONST; 
+            if(bgLayer1) bgLayer1.style.backgroundPositionX = `${bg1PosX}px`; 
+            if(bgLayer2) bgLayer2.style.backgroundPositionX = `${bg2PosX}px`; 
+            
+            groundPosX -= pixelsToMoveHorizontally; 
+            ceilingPosX -= pixelsToMoveHorizontally; 
+            if (groundPosX <= -tileImageWidth_CONST) groundPosX += tileImageWidth_CONST; 
+            if (ceilingPosX <= -tileImageWidth_CONST) ceilingPosX += tileImageWidth_CONST; 
+            if(ground) ground.style.backgroundPositionX = `${groundPosX}px`; 
+            if(ceiling) ceiling.style.backgroundPositionX = `${ceilingPosX}px`; 
+            
+            moveGameElements_FN('.obstacle', pixelsToMoveHorizontally); 
+            moveGameElements_FN('.beer', pixelsToMoveHorizontally); 
+            moveGameElements_FN('.kiwi', pixelsToMoveHorizontally); 
+            moveGameElements_FN('.qhk-logo', pixelsToMoveHorizontally); 
+            moveGameElements_FN('.boost-coin', pixelsToMoveHorizontally); 
+            moveGameElements_FN('.boost-particle', pixelsToMoveHorizontally); 
+            moveGameElements_FN('.debris-particle', pixelsToMoveHorizontally); 
+            moveGameElements_FN('.smoke-plume', pixelsToMoveHorizontally); 
+            moveGameElements_FN('.explosion', pixelsToMoveHorizontally); 
+            
+            if (startWall && startWall.style.display !== 'none' && wallTextureSwapped) { 
+                let wallCurrentLeft = parseFloat(startWall.style.left); 
+                if (isNaN(wallCurrentLeft)) wallCurrentLeft = 0; 
+                wallCurrentLeft -= pixelsToMoveHorizontally; 
+                startWall.style.left = `${wallCurrentLeft}px`; 
+                const wallWidth = parseFloat(startWall.style.width) || 150; 
+                if (wallCurrentLeft + wallWidth < -20) startWall.style.display = 'none'; 
+            } 
+            
+            const bottles = gameContainer.querySelectorAll('.thrown-bottle'); 
+            const bottleBaseSpeed = gameSpeed * 60 * dt; 
+            bottles.forEach(bottle => { 
+                let currentLeft = parseFloat(bottle.style.left); 
+                currentLeft -= bottleBaseSpeed * THROWN_BOTTLE_SPEED_X_FACTOR_CONST; 
+                bottle.style.left = `${currentLeft}px`; 
+                if (currentLeft + THROWN_BOTTLE_WIDTH_CONST < -10) { 
+                    if (bottle.debugBox && bottle.debugBox.parentNode) bottle.debugBox.remove(); 
+                    bottle.remove(); 
+                } 
+            }); 
+        } 
+        
+        let currentBottom = parseFloat(player.style.bottom); 
+        let newBottom = currentBottom; 
+        
+        if (isBoosting) { 
+            if (currentPlayerState !== 'boosting-anim') setPlayerState_FN('boosting-anim'); 
+            if (touchActionIdentifier !== null) { 
+                const difference = boostTargetY - currentBottom; 
+                newBottom = currentBottom + difference * BOOST_SMOOTH_FACTOR_CONST; 
+                if (Math.abs(difference) < 0.5) newBottom = boostTargetY; 
+            } else { 
+                if (boostVelocityY !== 0) { 
+                    let boostMove = boostVelocityY * dt * 60; 
+                    newBottom = currentBottom + boostMove; 
+                } 
+            } 
+            newBottom = Math.max(BOOST_MIN_BOTTOM_CONST, Math.min(newBottom, BOOST_MAX_BOTTOM_CONST)); 
+            player.style.bottom = newBottom + 'px'; 
+            
+            timeSinceLastParticle += dt; 
+            if (timeSinceLastParticle >= PARTICLE_SPAWN_INTERVAL_CONST) { 
+                spawnParticle_FN(); 
+                timeSinceLastParticle = 0; 
+            } 
+        } else if (isJumping) { 
+            playerDY -= gravity_CONST * dt * 60; 
+            if (isHoldingJump && playerDY > 0) { 
+                playerDY += JUMP_HOLD_BOOST_CONST * dt * 60; 
+            } 
+            let verticalChange = playerDY * dt * 60; 
+            newBottom = currentBottom + verticalChange; 
+            const jumpCeiling = playerBaseBottom_CONST + MAX_JUMP_HEIGHT_CONST; 
+            if (newBottom >= jumpCeiling && playerDY > 0) { 
+                newBottom = jumpCeiling; 
+                playerDY = 0; 
+            } 
+            if (newBottom <= playerBaseBottom_CONST && playerDY <= 0) { 
+                newBottom = playerBaseBottom_CONST; 
+                player.style.bottom = `${newBottom}px`; 
+                isJumping = false; 
+                playerDY = 0; 
+                if (isSlammingDown) { 
+                    isSlammingDown = false; 
+                    isSliding = true; 
+                    setPlayerState_FN('crouching'); 
+                    slideEnterTimeout = setTimeout(() => { 
+                        if (currentPlayerState === 'crouching' && isSliding) setPlayerState_FN('sliding'); 
+                        slideEnterTimeout = null; 
+                    }, CROUCH_TRANSITION_DURATION_CONST); 
+                } else { 
+                    setPlayerState_FN('running'); 
+                    if (sfxFootsteps.length > 0 && !isBoosting && !isSliding) { 
+                        footstepSfxPlaying = false; 
+                    } 
+                } 
+            } else { 
+                player.style.bottom = `${newBottom}px`; 
+                setPlayerState_FN(playerDY < JUMP_DOWN_THRESHOLD_CONST ? 'jumping-down' : 'jumping-up'); 
+            } 
+        } else if (isSliding || currentPlayerState === 'crouching') { 
+            if (currentBottom !== playerBaseBottom_CONST) player.style.bottom = `${playerBaseBottom_CONST}px`; 
+        } else { 
+            if (currentBottom !== playerBaseBottom_CONST) player.style.bottom = `${playerBaseBottom_CONST}px`; 
+            if (currentPlayerState !== 'running' && currentPlayerState !== 'idle' && !isPaused && !isCountingDown && !gameOver) { 
+                setPlayerState_FN('running'); 
+            } 
+        } 
+        
+        if (!isJumping && !isBoosting && parseFloat(player.style.bottom) < playerBaseBottom_CONST ) { 
+            player.style.bottom = `${playerBaseBottom_CONST}px`; 
+        } 
+        
+        if (sfxFootsteps.length > 0 && !isBoosting && !isJumping && !isSliding && currentPlayerState === 'running' && parseFloat(player.style.bottom) <= playerBaseBottom_CONST + 5 && !gameOver && !isPaused && !isCountingDown && !isInStartingAnimation) { 
+            timeSinceLastFootstep += dt; 
+            if (timeSinceLastFootstep >= FOOTSTEP_INTERVAL_CONST) { 
+                if (!footstepSfxPlaying) {
+                    const randomFootstepSfx = getRandomElement_FN(sfxFootsteps); 
+                    if (randomFootstepSfx) playSoundEffect_FN(randomFootstepSfx); 
+                    footstepSfxPlaying = true;
+                }
+                timeSinceLastFootstep = 0; 
+            } else if (timeSinceLastFootstep > 0.1) {
+                footstepSfxPlaying = false;
+            }
+        } else { 
+            if (currentPlayerState !== 'running' || isJumping || isSliding || isBoosting) { 
+                timeSinceLastFootstep = FOOTSTEP_INTERVAL_CONST; 
+                footstepSfxPlaying = false; 
+            } 
+        } 
+        
+        if (isSpawningQhkCoinStream) { 
+            timeSinceLastQhkStreamCoin += dt; 
+            if (timeSinceLastQhkStreamCoin >= QHK_STREAM_COIN_SPAWN_INTERVAL_SECONDS_CONST) { 
+                spawnSingleQhkStreamCoin_FN(); 
+                timeSinceLastQhkStreamCoin = 0; 
+            } 
+        } 
+
+        const playerRectForCollision = player.getBoundingClientRect(); 
+        if (!gameOver) { 
+            if (!isPostHitInvincible && !isQhkInvincible) { 
+                checkCollisions_FN('.obstacle', handleObstacleCollision_FN, playerRectForCollision); 
+                checkCollisions_FN('.thrown-bottle', handleBottleCollision_FN, playerRectForCollision); 
+            } else if (isBoosting) { 
+                checkCollisions_FN('.obstacle', handleObstacleCollision_FN, playerRectForCollision); 
+                checkCollisions_FN('.thrown-bottle', handleBottleCollision_FN, playerRectForCollision); 
+            } 
+        } 
+        if (!gameOver) { 
+            checkCollisions_FN('.beer', handleBeerCollision_FN, playerRectForCollision); 
+            checkCollisions_FN('.kiwi', handleKiwiCollision_FN, playerRectForCollision); 
+            checkCollisions_FN('.qhk-logo', handleQhkLogoCollision_FN, playerRectForCollision); 
+            checkCollisions_FN('.boost-coin', handleBoostCoinCollision_FN, playerRectForCollision); 
+        } 
+        if (!gameOver) { 
+            timeSinceLastObstacle += dt; 
+            let speedRatio = INITIAL_GAME_SPEED_CONST / gameSpeed; 
+            let adjustedSpeedRatio = Math.pow(speedRatio, OBSTACLE_SPAWN_SPEED_SENSITIVITY_CONST); 
+            let dynamicObstacleIntervalSeconds = (BASE_OBSTACLE_INTERVAL_MS_CONST / 1000) * adjustedSpeedRatio; 
+            currentObstacleIntervalSeconds = Math.max(MIN_OBSTACLE_INTERVAL_SECONDS_CONST, dynamicObstacleIntervalSeconds); 
+            if (timeSinceLastObstacle >= currentObstacleIntervalSeconds) { 
+                spawnObstacle_FN(); 
+                timeSinceLastObstacle = 0 - (Math.random() * 0.1); 
+            } 
+            
+            timeSinceLastBeer += dt; 
+            if (timeSinceLastBeer >= currentBeerIntervalSeconds) { 
+                spawnBeer_FN(); 
+                timeSinceLastBeer = 0 - (Math.random() * 0.1); 
+            } 
+            
+            timeSinceLastKiwiCheck += dt; 
+            if (timeSinceLastKiwiCheck >= currentKiwiIntervalSeconds) { 
+                trySpawnKiwi_FN(); 
+                timeSinceLastKiwiCheck = 0; 
+            } 
+            
+            timeSinceLastQhkLogoCheck += dt; 
+            if (timeSinceLastQhkLogoCheck >= (QHK_LOGO_SPAWN_INTERVAL_CONST / 1000)) { 
+                trySpawnQhkLogo_FN(); 
+                timeSinceLastQhkLogoCheck = 0; 
+            } 
+            
+            timeSinceLastBottle += dt; 
+            let bottleSpeedRatio = INITIAL_GAME_SPEED_CONST / gameSpeed; 
+            let bottleAdjustedSpeedRatio = Math.pow(bottleSpeedRatio, BOTTLE_SPAWN_SENSITIVITY_CONST); 
+            currentBottleIntervalSeconds = Math.max(MIN_BOTTLE_INTERVAL_SECONDS_CONST, (BASE_BOTTLE_INTERVAL_MS_CONST / 1000) * bottleAdjustedSpeedRatio); 
+            if (timeSinceLastBottle >= currentBottleIntervalSeconds) { 
+                if (Math.random() < BOTTLE_SPAWN_CHANCE_CONST) { 
+                    spawnThrownBottle_FN(); 
+                } 
+                timeSinceLastBottle = 0; 
+            } 
+            
+            if (isBoosting && !isQhkInvincible) { 
+                timeSinceLastBoostCoinSpawn += dt; 
+                const nextCoinSpawnDelay = Math.random() * (BOOST_COIN_SPAWN_INTERVAL_MAX_CONST - BOOST_COIN_SPAWN_INTERVAL_MIN_CONST) + BOOST_COIN_SPAWN_INTERVAL_MIN_CONST; 
+                if (timeSinceLastBoostCoinSpawn >= nextCoinSpawnDelay) { 
+                    trySpawnBoostCoin_FN(); 
+                    timeSinceLastBoostCoinSpawn = 0; 
+                } 
+            } 
+        } 
+    }
+
+    // --- RENDER VISUALS (Separated for performance) ---
+    function renderGameVisuals_FN() {
+        if (playerShadow && player && player.style.display !== 'none' && !gameOver && !isPaused && !isCountingDown && !isInStartingAnimation) { 
+            const playerSpriteBottom = parseFloat(player.style.bottom); 
+            const playerLeft = parseFloat(player.style.left); 
+            const playerWidth = parseFloat(player.style.width) || playerWidth_CONST; 
+            
+            // CSS Transform based logic for high performance
+            const shadowX = playerLeft + (playerWidth / 2) - (SHADOW_BASE_WIDTH_CONST / 2);
+            // Translate Y expects negative to move UP relative to container, positive to move DOWN.
+            // With bottom: 0, we move it DOWN by using negative groundHeight plus offsets
+            const shadowY = -1 * (groundHeight_CONST - (SHADOW_BASE_HEIGHT_CONST / 2) + SHADOW_GROUND_OFFSET_Y_CONST);
+
+            let distanceFromPlayerBase = Math.max(0, playerSpriteBottom - playerBaseBottom_CONST); 
+            if (isBoosting) distanceFromPlayerBase = MAX_JUMP_HEIGHT_CONST * 1.5; 
+            let scale = 1 - (distanceFromPlayerBase / (MAX_JUMP_HEIGHT_CONST * 1.2)); 
+            scale = Math.max(SHADOW_MIN_SCALE_CONST, Math.min(1.0, scale)); 
+            const minOpacity = 0.15, maxOpacity = 0.35; 
+            let opacity = minOpacity + (scale - SHADOW_MIN_SCALE_CONST) * (maxOpacity - minOpacity) / (1.0 - SHADOW_MIN_SCALE_CONST); 
+            opacity = Math.max(minOpacity, Math.min(maxOpacity, opacity)); 
+            
+            if (distanceFromPlayerBase > MAX_JUMP_HEIGHT_CONST * 1.1 || isBoosting || scale <= SHADOW_MIN_SCALE_CONST + 0.01) { 
+                playerShadow.style.display = 'none'; 
+            } else { 
+                playerShadow.style.display = 'block'; 
+                playerShadow.style.transform = `translate(${shadowX}px, ${shadowY}px) scale(${scale})`; 
+                playerShadow.style.opacity = opacity; 
+            } 
+        } else if (playerShadow) { 
+            playerShadow.style.display = 'none'; 
+        } 
+        
+        if (DEBUG_HITBOXES_CONST && gameContainer.offsetParent !== null) { 
+            if (playerDebugElement) { 
+                const playerBaseLeft = parseFloat(player.style.left); 
+                const playerBaseBottomVal = parseFloat(player.style.bottom); 
+                const currentUnscaledPlayerHeight = parseFloat(player.style.height) || playerHeight_CONST; 
+                const currentUnscaledPlayerWidth = parseFloat(player.style.width) || playerWidth_CONST; 
+                const unscaledHitboxWidth = currentUnscaledPlayerWidth - 2 * HITBOX_HORIZONTAL_PADDING_CONST; 
+                const unscaledHitboxHeight = currentUnscaledPlayerHeight - 2 * HITBOX_VERTICAL_PADDING_CONST; 
+                const unscaledHitboxOffsetX = HITBOX_HORIZONTAL_PADDING_CONST; 
+                const unscaledHitboxOffsetY = HITBOX_VERTICAL_PADDING_CONST; 
+                const playerBaseTop = GAME_DESIGN_HEIGHT_CONST - playerBaseBottomVal - currentUnscaledPlayerHeight; 
+                const isValid = !(unscaledHitboxHeight <= 0 || unscaledHitboxWidth <= 0); 
+                playerDebugElement.style.top = `${playerBaseTop + unscaledHitboxOffsetY}px`; 
+                playerDebugElement.style.left = `${playerBaseLeft + unscaledHitboxOffsetX}px`; 
+                playerDebugElement.style.width = isValid ? `${unscaledHitboxWidth}px` : '0px'; 
+                playerDebugElement.style.height = isValid ? `${unscaledHitboxHeight}px` : '0px'; 
+                playerDebugElement.style.display = isValid ? 'block' : 'none'; 
+            } 
+            const gameElementsWithDebug = gameContainer.querySelectorAll('.obstacle, .thrown-bottle'); 
+            gameElementsWithDebug.forEach(element => { 
+                if (element.debugBox && element.debugBox.parentNode) { 
+                    const baseLeft = parseFloat(element.style.left); 
+                    let baseWidth, baseHeight, baseTopVal; 
+                    if (element.classList.contains('obstacle')) { 
+                        if (element.classList.contains('tall')) { baseWidth = tallObstacleWidth_CONST; baseHeight = tallObstacleHeight_CONST; } 
+                        else if (element.classList.contains('short')) { baseWidth = shortObstacleWidth_CONST; baseHeight = shortObstacleHeight_CONST; } 
+                        else if (element.classList.contains('high')) { baseWidth = highObstacleWidth_CONST; baseHeight = highObstacleHeight_CONST; } 
+                        else { baseWidth = 50; baseHeight = 50; } 
+                        if (element.classList.contains('high')) { baseTopVal = parseFloat(element.style.top) || CEILING_HEIGHT_CONST; } 
+                        else { const baseBottomVal = parseFloat(element.style.bottom) || groundHeight_CONST; baseTopVal = GAME_DESIGN_HEIGHT_CONST - baseBottomVal - baseHeight;} 
+                    } else if (element.classList.contains('thrown-bottle')) { 
+                        baseWidth = THROWN_BOTTLE_WIDTH_CONST; baseHeight = THROWN_BOTTLE_HEIGHT_CONST; baseTopVal = parseFloat(element.style.top); 
+                    } 
+                    const isVisible = (baseWidth > 0 && baseHeight > 0 && baseLeft < GAME_DESIGN_WIDTH_CONST && baseLeft + baseWidth > 0 && baseTopVal !== null && baseTopVal + baseHeight > 0 && baseTopVal < GAME_DESIGN_HEIGHT_CONST); 
+                    if (isVisible) { 
+                        element.debugBox.style.top = `${baseTopVal}px`; 
+                        element.debugBox.style.left = `${baseLeft}px`; 
+                        element.debugBox.style.width = `${baseWidth}px`; 
+                        element.debugBox.style.height = `${baseHeight}px`; 
+                        element.debugBox.style.display = 'block'; 
+                    } else { 
+                        element.debugBox.style.display = 'none'; 
+                    } 
+                } 
+            }); 
+        } else if (DEBUG_HITBOXES_CONST) { 
+            if(playerDebugElement) playerDebugElement.style.display = 'none'; 
+            const obstacleDebugs = gameContainer.querySelectorAll('.obstacle-debug'); 
+            obstacleDebugs.forEach(box => box.style.display = 'none'); 
+        } 
+    }
+
     function moveGameElements_FN(selector, pixelsToMove) { if(!gameContainer) return; const elements = gameContainer.querySelectorAll(selector); elements.forEach(element => { if (element.id === 'start-wall') return; let currentLeft = parseFloat(element.style.left); if (isNaN(currentLeft)) currentLeft = GAME_DESIGN_WIDTH_CONST; const newLeft = currentLeft - pixelsToMove; element.style.left = `${newLeft}px`; let elementWidth = 0; if(element.classList.contains('boost-particle')) elementWidth = 4; else if (element.classList.contains('debris-particle')) elementWidth = parseFloat(element.style.width) || 5; else if (element.classList.contains('smoke-plume')) elementWidth = parseFloat(element.style.width) || SMOKE_PLUME_ASSET_SIZE_CONST; else if (element.classList.contains('thrown-bottle')) elementWidth = THROWN_BOTTLE_WIDTH_CONST; else if (element.classList.contains('explosion')) elementWidth = 120; else elementWidth = element.offsetWidth || parseFloat(element.style.width) || 50; if (newLeft + elementWidth < -20) { if (DEBUG_HITBOXES_CONST && (element.classList.contains('obstacle') || element.classList.contains('thrown-bottle')) && element.debugBox && element.debugBox.parentNode) element.debugBox.remove(); if (!element.classList.contains('explosion')) { element.remove(); } } }); }
     function checkCollisions_FN(selector, collisionHandler, playerRect) { if(!gameContainer || !playerRect) return; const items = gameContainer.querySelectorAll(selector); if (items.length === 0) return; const hitboxTop = playerRect.top + (HITBOX_VERTICAL_PADDING_CONST*currentScale), hitboxBottom = playerRect.bottom - (HITBOX_VERTICAL_PADDING_CONST*currentScale), hitboxLeft = playerRect.left + (HITBOX_HORIZONTAL_PADDING_CONST*currentScale), hitboxRight = playerRect.right - (HITBOX_HORIZONTAL_PADDING_CONST*currentScale); if (hitboxTop >= hitboxBottom || hitboxLeft >= hitboxRight) return; items.forEach(item => { if (!item.parentNode) return; const itemRect = item.getBoundingClientRect(); if (itemRect.width === 0 || itemRect.height === 0) return; const collision = !(hitboxRight < itemRect.left || hitboxLeft > itemRect.right || hitboxBottom < itemRect.top || hitboxTop > itemRect.bottom); if (collision) collisionHandler(item, itemRect); }); }
     function handleObstacleCollision_FN(obstacle, obstacleRect) { if (isBoosting) { if(!gameContainer) return; const containerRect = gameContainer.getBoundingClientRect(); createExplosion_FN(obstacleRect, containerRect); if(sfxWallBreak) playSoundEffect_FN(sfxWallBreak); if (DEBUG_HITBOXES_CONST && obstacle.debugBox && obstacle.debugBox.parentNode) obstacle.debugBox.remove(); obstacle.remove(); return; } if (isPostHitInvincible || isQhkInvincible || gameOver || !player || !gameContainer) return; forceStopSlideMechanics_FN(); if(sfxHit) playSoundEffect_FN(sfxHit); playerLives--; updateHeartDisplay_FN(); const playerRect = player.getBoundingClientRect(), containerRect = gameContainer.getBoundingClientRect(); createExplosion_FN(playerRect, containerRect); if (DEBUG_HITBOXES_CONST && obstacle.debugBox && obstacle.debugBox.parentNode) obstacle.debugBox.remove(); obstacle.remove(); if (playerLives <= 0) endGame_FN(); else startPostHitInvincibility_FN(); }
