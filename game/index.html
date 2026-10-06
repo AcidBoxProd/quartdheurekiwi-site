@@ -1,170 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <!-- Optimized viewport for gaming -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Quart d'Heure Kiwi Run</title>
-    
-    <!-- Preconnect to Font Servers -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=VT323&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="style.css">
-
-    <!-- --- PRELOAD CRITICAL IMAGES TO STOP FLASHING --- -->
-    <!-- Adjust these paths if your images are elsewhere -->
-    <link rel="preload" as="image" href="img/home-screen-1920x1080.png">
-    <link rel="preload" as="image" href="img/char-select-screen-bg.png">
-    <link rel="preload" as="image" href="img/bg-far.png">
-    <link rel="preload" as="image" href="img/bg-near.png">
-    <link rel="preload" as="image" href="img/ground-tile.png">
-    <link rel="preload" as="image" href="img/ceiling-tile.png">
-    <link rel="preload" as="image" href="img/wall-texture-solid.png">
-    <!-- Preload at least the default character's sprites -->
-    <link rel="preload" as="image" href="img/raphael-run-sprite.png">
-    <link rel="preload" as="image" href="img/raphael-jump-up.png">
-    <link rel="preload" as="image" href="img/raphael-jump-down.png">
-    <!-- ----------------------------------------------------- -->
-
-    <!-- Web App Metas -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#100c08">
+<title>Quart d'Heure Kiwi Run</title>
+<link rel="icon" href="img/qhk-logo.png">
+<link rel="stylesheet" href="fonts/pixel.css?v=2026100604">
+<link rel="stylesheet" href="style.css?v=2026100604">
+<script defer src="engine.js?v=2026100604"></script>
+<script defer src="renderer.js?v=2026100604"></script>
+<script defer src="script.js?v=2026100604"></script>
 </head>
 <body>
-<!-- Splash Screen: Crucial for hiding initial asset loading -->
-<div id="splash-screen">
-    <!-- Optional: <img src="img/your-logo-for-splash.png" alt="Loading..." /> -->
-    <div id="splash-button-container">
-        <button id="splash-start-button" type="button">PLAY !</button>
-    </div>
-</div>
-
-    <!-- --- AUDIO ELEMENTS --- -->
-    <div id="audio-container" style="display: none;">
-        <!-- Music: Set to AUTO so they fully buffer before the game starts. Prevents stuttering. -->
-        <audio id="background-music" loop preload="auto"><source src="audio/quart-dheure-kiwi-theme.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
-        <audio id="invincibility-music" loop preload="auto"><source src="audio/invincibility-music.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
-        <audio id="menu-music" loop preload="auto"><source src="audio/menu-theme.mp3" type="audio/mpeg">Your browser does not support the audio element.</audio>
-        
-        <!-- SFX: Preload "none" to save bandwidth. JS will handle them. -->
-        <audio id="sfx-jump" preload="none"><source src="audio/jump-sfx.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-beer" preload="none"><source src="audio/beer-collect-sfx.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-kiwi" preload="none"><source src="audio/kiwi-collect-sfx.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-hit" preload="none"><source src="audio/hit-sfx.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-boost" preload="none"><source src="audio/boost-activate-sfx.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-game-over" preload="none"><source src="audio/game-over-sfx.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-wall-break" preload="none"><source src="audio/wall-break-sfx.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-slide" preload="none"><source src="audio/slide-sfx.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-coin" preload="none"><source src="audio/coin.mp3" type="audio/mpeg"></audio>
-        
-        <audio id="sfx-footstep-1" preload="metadata"><source src="audio/footstep-sfx-1.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-footstep-2" preload="metadata"><source src="audio/footstep-sfx-2.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-footstep-3" preload="metadata"><source src="audio/footstep-sfx-3.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-footstep-4" preload="metadata"><source src="audio/footstep-sfx-4.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-button-click" preload="metadata"><source src="audio/button-click-sfx.mp3" type="audio/mpeg"></audio>
-        <audio id="sfx-char-select-confirm" preload="metadata"><source src="audio/char-select-confirm-sfx.mp3" type="audio/mpeg"></audio>
-    </div>
-    <!-- --- END AUDIO ELEMENTS --- -->
-
-    <div id="rotate-prompt" class="hidden">
-        <p>Veuillez faire pivoter votre appareil en mode paysage.</p>
-    </div>
-
-    <!-- Main Game Wrapper -->
-    <div id="page-rotator">
-        <div id="scaler-wrapper">
-            <!-- Screens -->
-            <div id="home-screen" class="hidden">
-                <button id="home-start-image-button" class="home-image-button" aria-label="Start Game"></button>
-                <button id="home-menu-image-button" class="home-image-button" aria-label="Open Menu"></button>
-            </div>
-
-            <div id="settings-menu-screen" class="hidden">
-                <div class="setting-item" style="display: none;">
-                    <span>Music</span><label class="switch"><input type="checkbox" id="music-toggle" checked><span class="slider round"></span></label>
-                </div>
-                <div class="setting-item" style="display: none;">
-                    <span>SFX</span><label class="switch"><input type="checkbox" id="sfx-toggle" checked><span class="slider round"></span></label>
-                </div>
-                <button id="settings-back-image-button" class="settings-image-button" aria-label="Back to Home"></button>
-                <button id="settings-music-toggle-area" class="settings-image-button" aria-label="Toggle Music"></button>
-                <button id="settings-sfx-toggle-area" class="settings-image-button" aria-label="Toggle SFX"></button>
-            </div>
-
-            <div id="character-selection-screen" class="hidden">
-                <button id="char-select-back-home-button" aria-label="Back to Home"></button>
-                <p class="high-score-display">High Score: <span id="char-select-high-score">0</span></p>
-                <!-- Added touch-action: none to prevent browser scrolling interference -->
-                <div class="character-slot-container" data-char="char1" aria-label="Select Raphaël" style="touch-action: none;"><div class="char-sprite-animation"></div></div>
-                <div class="character-slot-container" data-char="char2" aria-label="Select Mick" style="touch-action: none;"><div class="char-sprite-animation"></div></div>
-                <div class="character-slot-container" data-char="char3" aria-label="Select Thibault" style="touch-action: none;"><div class="char-sprite-animation"></div></div>
-                <div class="character-slot-container" data-char="char4" aria-label="Select Simon" style="touch-action: none;"><div class="char-sprite-animation"></div></div>
-                <div id="char-select-screen-overlay" class="hidden"></div>
-                <p id="loading-message" class="hidden">Loading assets...</p>
-            </div>
-
-            <!-- Game Elements: These must be promoted to GPU layers in CSS -->
-            <div id="game-container" class="hidden">
-                <!-- Ceiling should also have will-change -->
-                <div id="ceiling" style="will-change: background-position-x;"></div>
-                <!-- Ensure background layers use transform in CSS for movement -->
-                <div id="bg-layer-1" class="bg-layer" style="will-change: background-position-x;"></div>
-                <div id="bg-layer-2" class="bg-layer" style="will-change: background-position-x;"></div>
-                <div id="start-wall"></div>
-                <div id="ui-top-bar">
-                    <div id="heart-container"></div>
-                    <div id="score-board">SCORE: <span id="score">0</span></div>
-                </div>
-                <div id="power-gauge-container">
-                    <div id="power-gauge-fill" style="will-change: height;"></div>
-                    <span id="power-gauge-text">BOOST</span>
-                </div>
-                <!-- Ground needs will-change -->
-                <div id="ground" style="will-change: background-position-x;"></div>
-                <!-- Player needs will-change for smooth jumping/running -->
-                <div id="player" style="will-change: bottom, transform, opacity, filter;"></div>
-                <!-- Shadow needs will-change for transform -->
-                <div id="player-shadow" style="will-change: transform, opacity;"></div>
-                
-                <div id="player-hitbox-debug" class="debug-hitbox player-debug" style="display: none;"></div>
-                <button id="pause-button" title="Pause/Resume"><span class="pause-icon-bar"></span><span class="pause-icon-bar"></span></button>
-                <div id="pause-overlay" class="hidden">
-                    <div id="pause-menu-buttons">
-                        <span id="pause-message">PAUSED</span>
-                        <div class="pause-buttons-row">
-                            <button id="pause-home-button" class="overlay-button">Home</button>
-                            <button id="resume-button" class="overlay-button">Resume</button>
-                        </div>
-                    </div>
-                    <span id="countdown-display" class="hidden">3</span>
-                </div>
-                <div id="game-over-screen" class="hidden">
-                    <h2>Game Over!</h2>
-                    <p>Final Score: <span id="final-score">0</span></p>
-                    <p class="high-score-display">High Score: <span id="game-over-high-score">0</span></p>
-                    <div class="game-over-buttons">
-                        <button id="restart-button">Restart Run</button>
-                        <button id="change-char-button">Change Character</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="confirmation-dialog" class="hidden">
-                <div class="dialog-content">
-                    <p id="confirmation-message">Are you sure?</p>
-                    <div class="dialog-buttons">
-                        <button id="confirm-yes-button" class="dialog-button confirm">Yes</button>
-                        <button id="confirm-no-button" class="dialog-button cancel">No</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Load script with 'defer' so HTML parses first -->
-    <script src="script.js" defer></script>
-</body>
-</html>
+<main id="stage" aria-label="Quart d’Heure Kiwi Run">
+<canvas id="scene" width="800" height="450" aria-label="Terrain de jeu"></canvas>
+<section id="splash" class="screen" aria-label="Bienvenue">
+<button id="play" class="solid start">PLAY !</button>
+</section>
+<section id="home" class="screen" hidden aria-label="Accueil">
+<button id="start" class="image-button" aria-label="Start Game"></button>
+<button id="settings-open" class="image-button" aria-label="Open Menu"></button>
+</section>
+<section id="settings" class="screen" hidden aria-label="Réglages">
+<button id="settings-back" class="image-button back" aria-label="Retour à l’accueil"></button>
+<button id="music-toggle" class="image-button" aria-label="Musique" aria-pressed="true"></button>
+<button id="sfx-toggle" class="image-button" aria-label="Effets sonores" aria-pressed="true"></button>
+</section>
+<section id="characters" class="screen" hidden aria-label="Choisir un personnage">
+<button id="characters-back" class="image-button back" aria-label="Retour à l’accueil"></button>
+<p class="record">High Score: <span id="record">0</span></p>
+<button class="image-button character" data-character="raphael" aria-label="Select Raphaël"></button>
+<button class="image-button character" data-character="mick" aria-label="Select Mick"></button>
+<button class="image-button character" data-character="thibault" aria-label="Select Thibault"></button>
+<button class="image-button character" data-character="simon" aria-label="Select Simon"></button>
+</section>
+<section id="game" class="screen" hidden aria-label="Partie">
+<div id="score">SCORE: 0</div><div id="hearts" aria-label="3 vies"></div>
+<button id="pause" class="small" aria-label="Pause"><span class="pause-bars" aria-hidden="true"></span></button>
+<button id="boost" aria-label="Activer le boost" disabled><span id="boost-fill"></span><span id="boost-label">BOOST</span></button>
+<div id="pause-panel" class="overlay" hidden><h1 id="pause-title">PAUSED</h1><div id="pause-actions"><button id="pause-home" class="solid">Home</button><button id="resume" class="solid">Resume</button></div><p id="countdown" hidden></p></div>
+<div id="over" class="overlay" hidden><h1>Game Over!</h1><p>Final Score: <span id="final-score">0</span></p><p>High Score: <span id="final-record">0</span></p><div><button id="restart" class="solid">Restart Run</button><button id="change-character" class="solid">Change Character</button></div></div>
+</section>
+<div id="confirmation" class="overlay" hidden><h1>Quitter la partie ?</h1><p>La partie en cours sera perdue.</p><div><button id="confirm-home" class="solid">Quitter</button><button id="cancel-home" class="solid">Continuer</button></div></div>
+<div id="loading" class="overlay"><p id="loading-text" role="status">Chargement…</p><button id="retry" class="solid" hidden>Réessayer</button></div>
+<div id="context-error" class="overlay" hidden><p>L’affichage a été interrompu. La partie est en pause.</p><button id="context-retry" class="solid">Recharger le jeu</button></div>
+</main>
+<p id="portrait-hint">Tournez votre appareil pour jouer en grand format.</p>
+<noscript>Activez JavaScript pour jouer à QHK Run.</noscript>
+</body></html>
